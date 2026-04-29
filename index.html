@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jia — Telco Prototypes</title>
+<style>
+  @font-face { font-family: 'JioType'; font-weight: 500; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 700; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 900; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Black.woff2') format('woff2'); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'JioType', system-ui, sans-serif;
+    background: #0A0A0B; color: #F2F2F2; min-height: 100vh;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .wrap { max-width: 920px; width: 100%; }
+  .head { text-align: center; margin-bottom: 40px; }
+  .logo {
+    width: 88px; height: 88px; border-radius: 999px; margin: 0 auto 20px;
+    background: linear-gradient(145deg, #FFC86B, #F7AB20);
+    display: grid; place-items: center; color: #0E0E10;
+    font-weight: 900; font-size: 44px; letter-spacing: -0.04em;
+    box-shadow: 0 6px 30px rgba(247,171,32,0.4);
+  }
+  h1 { font-size: 44px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 10px; }
+  .sub { color: #A8A8A8; font-size: 17px; max-width: 540px; margin: 0 auto; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+  .card {
+    background: #1C1C1E; border: 1px solid #2A2A2A; border-radius: 24px;
+    padding: 28px 24px; text-decoration: none; color: inherit; display: flex; flex-direction: column;
+    transition: border-color 200ms, transform 150ms;
+  }
+  .card:hover { border-color: rgba(247,171,32,0.45); transform: translateY(-3px); }
+  .card .num {
+    font-size: 11px; font-weight: 800; color: #F7AB20; letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .card h2 { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 8px; line-height: 1.15; }
+  .card p { font-size: 14px; color: #A8A8A8; line-height: 1.5; flex: 1; }
+  .card .cta {
+    margin-top: 18px; font-size: 14px; font-weight: 700; color: #F7AB20;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .footer {
+    text-align: center; margin-top: 40px;
+    color: #6E6E6E; font-size: 12px; line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="logo">J</div>
+    <h1>Jia — AI Companion</h1>
+    <p class="sub">Three prototypes exploring how subscribers reach Jia via voice, RCS, or both.</p>
+  </div>
+  <div class="grid">
+    <a class="card" href="jia-voice.html">
+      <div class="num">01 · Voice only</div>
+      <h2>Dial #555</h2>
+      <p>iPhone-style audio call. Jia greets, Shreya speaks via the mic, conversation cycles through weather and cricket score. Audio-only — no captions.</p>
+      <div class="cta">Open prototype →</div>
+    </a>
+    <a class="card" href="jia-rcs.html">
+      <div class="num">02 · RCS only</div>
+      <h2>Google Messages</h2>
+      <p>Pixel-framed RCS thread. Restaurants in Bandra, weather card, live cricket score, bill payment — full Jia conversation with rich cards and chips.</p>
+      <div class="cta">Open prototype →</div>
+    </a>
+    <a class="card" href="jia-voice-rcs.html">
+      <div class="num">03 · Voice + RCS</div>
+      <h2>The hybrid</h2>
+      <p>Call starts on iPhone, Shreya asks for restaurants, Jia says "I've sent options", call PiPs to the dynamic island and RCS slides up with the carousel.</p>
+      <div class="cta">Open prototype →</div>
+    </a>
+  </div>
+  <div class="footer">
+    Voice via Sarvam AI TTS (Anushka for Jia, Manisha for Shreya).<br/>
+    All flows are scripted — no live LLM/STT/TTS calls.
+  </div>
+</div>
+</body>
+</html>

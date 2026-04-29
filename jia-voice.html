@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jia — Voice Assistant</title>
+<style>
+  @font-face { font-family: 'JioType'; font-weight: 500; font-style: normal; font-display: swap;
+    src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 700; font-style: normal; font-display: swap;
+    src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 900; font-style: normal; font-display: swap;
+    src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Black.woff2') format('woff2'); }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --gold: #F7AB20;
+    --gold-soft: #FFC86B;
+    --gold-tint: rgba(247,171,32,0.12);
+    --ink: #F2F2F2;
+    --ink-2: #A8A8A8;
+    --ink-3: #6E6E6E;
+    --bg-deep: #0A0A0B;
+    --bg-call: #050505;
+    --line: rgba(255,255,255,0.10);
+    --user-blue: #4FC1FF;
+  }
+
+  html, body {
+    height: 100%; width: 100%;
+    font-family: 'JioType', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: #0A0A0B; color: var(--ink); overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100dvh; padding: 16px;
+  }
+
+  /* ── iOS device frame ─────────────────────────────────── */
+  .device {
+    width: 390px; height: 844px;
+    border-radius: 54px;
+    background: #000;
+    border: 6px solid #1a1a1a;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06) inset;
+    overflow: hidden;
+    position: relative;
+    display: flex; flex-direction: column;
+    transform-origin: center center;
+  }
+  @media (max-height: 880px) {
+    body { padding: 8px; }
+  }
+  /* Dynamic island */
+  .island {
+    position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 122px; height: 36px; border-radius: 999px;
+    background: #000;
+    z-index: 100;
+    transition: all 350ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .island.expanded {
+    width: 240px; height: 38px;
+    background: #001a08;
+    padding: 0 14px;
+    gap: 10px;
+  }
+  .island-pill {
+    display: none; align-items: center; gap: 8px;
+    color: #2dd66a; font-size: 13px; font-weight: 700; width: 100%;
+    justify-content: space-between;
+  }
+  .island.expanded .island-pill { display: flex; }
+  .island-pill .left { display: flex; align-items: center; gap: 6px; }
+  .island-pill .left svg { width: 14px; height: 14px; }
+  .island-pill .timer { font-variant-numeric: tabular-nums; }
+
+  /* iOS status bar */
+  .status-bar {
+    height: 54px; flex-shrink: 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 16px 32px 0;
+    color: #fff; font-size: 17px; font-weight: 600;
+    font-feature-settings: 'tnum';
+    z-index: 5; position: relative;
+  }
+  .status-bar .left { width: 64px; }
+  .status-bar .right { width: 64px; display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+
+  /* ── Screen container ─────────────────────────────────── */
+  .screen {
+    flex: 1; display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+  }
+  .home-indicator {
+    height: 34px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    background: transparent;
+  }
+  .home-indicator::before {
+    content: ''; width: 134px; height: 5px; border-radius: 999px; background: rgba(255,255,255,0.6);
+  }
+
+  .screen-dialer, .screen-call { display: none; flex-direction: column; height: 100%; }
+  .screen.show-dialer .screen-dialer { display: flex; }
+  .screen.show-call .screen-call { display: flex; }
+
+  /* ── Dialer ──────────────────────────────────────────── */
+  .screen-dialer { background: #000; padding: 0 0 16px; }
+  .dialer-display {
+    flex: 0 0 auto; padding: 12px 24px 28px;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 110px;
+  }
+  .dialer-number {
+    font-size: 44px; font-weight: 400; letter-spacing: 0;
+    color: #fff; min-height: 56px;
+    font-feature-settings: 'tnum';
+  }
+  .dialer-cursor {
+    display: inline-block; width: 2px; height: 38px; background: var(--gold);
+    margin-left: 4px; vertical-align: middle;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .dialer-grid {
+    flex: 1; display: grid;
+    grid-template-columns: repeat(3, 76px);
+    grid-auto-rows: 76px;
+    gap: 14px 30px;
+    justify-content: center; align-content: center;
+    padding: 0 24px;
+  }
+  .dial-key {
+    width: 76px; height: 76px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18); color: #fff;
+    border: none; cursor: pointer;
+    transition: background 100ms;
+    font-family: inherit; padding: 0;
+  }
+  .dial-key:active { background: rgba(255,255,255,0.32); }
+  .dial-key .digit { font-size: 30px; font-weight: 400; line-height: 1; letter-spacing: 0; }
+  .dial-key .letters {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.18em;
+    margin-top: 3px; color: #fff;
+  }
+  .dial-key.symbol .digit { font-size: 32px; }
+  .dial-key.symbol .letters { visibility: hidden; }
+
+  .dialer-actions {
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    padding: 4px 30px 0;
+  }
+  .dialer-actions .spacer { content: ''; }
+  .call-btn {
+    width: 70px; height: 70px; border-radius: 50%;
+    background: #2DD66A; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 20px rgba(45,214,106,0.4);
+    transition: transform 150ms;
+    grid-column: 2;
+  }
+  .call-btn:active { transform: scale(0.95); }
+  .call-btn svg { width: 32px; height: 32px; fill: white; }
+  .delete-btn {
+    grid-column: 3; justify-self: end;
+    width: 36px; height: 36px; border: none; background: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; opacity: 0.6;
+  }
+  .delete-btn:disabled { opacity: 0; pointer-events: none; }
+  .delete-btn svg { width: 28px; height: 22px; }
+
+  /* ── Call screen ─────────────────────────────────────── */
+  .screen-call {
+    background: radial-gradient(ellipse at top, #0a0a0c 0%, #050505 80%);
+    color: #fff; padding-top: 8px;
+  }
+  .call-header { padding: 12px 32px 0; text-align: center; flex-shrink: 0; }
+  .call-name { font-size: 28px; font-weight: 500; letter-spacing: -0.01em; color: #fff; }
+  .call-state { margin-top: 6px; font-size: 16px; color: rgba(255,255,255,0.65); font-weight: 400;
+    font-variant-numeric: tabular-nums; min-height: 20px; }
+
+  /* ── Orb visualizer ──────────────────────────────────── */
+  .orb-area {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    position: relative; padding: 20px;
+  }
+  .orb {
+    position: relative;
+    width: 220px; height: 220px;
+    display: grid; place-items: center;
+  }
+  .orb-ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--gold-soft), var(--gold) 60%, #b06f00 100%);
+    box-shadow:
+      0 0 80px rgba(247,171,32,0.55),
+      0 0 160px rgba(247,171,32,0.3),
+      inset 0 6px 30px rgba(255,220,150,0.6),
+      inset 0 -6px 30px rgba(140,80,0,0.3);
+    transition: transform 800ms ease, box-shadow 800ms ease;
+    animation: orb-idle 4s ease-in-out infinite;
+  }
+  .orb-letter {
+    position: relative; z-index: 2;
+    font-family: 'JioType', system-ui; font-weight: 900;
+    font-size: 96px; color: #0E0E10;
+    letter-spacing: -0.04em;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.18);
+    user-select: none;
+  }
+  /* Pulse ripples (3 layered rings) */
+  .pulse {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 2px solid rgba(247,171,32,0.6);
+    opacity: 0; pointer-events: none;
+  }
+  .orb.speaking .pulse { animation: pulse-out 1.4s ease-out infinite; }
+  .orb.speaking .pulse:nth-child(2) { animation-delay: 0.45s; }
+  .orb.speaking .pulse:nth-child(3) { animation-delay: 0.9s; }
+  /* User-listening state — blue accent ring */
+  .orb.listening .orb-ring {
+    background: radial-gradient(circle at 30% 30%, #aee0ff, var(--user-blue) 60%, #1a78b8 100%);
+    box-shadow:
+      0 0 80px rgba(79,193,255,0.55),
+      0 0 160px rgba(79,193,255,0.3),
+      inset 0 6px 30px rgba(220,240,255,0.6),
+      inset 0 -6px 30px rgba(20,80,140,0.3);
+  }
+  .orb.listening .orb-letter { font-size: 72px; }
+  .orb.listening .pulse {
+    border-color: rgba(79,193,255,0.6);
+    animation: pulse-out 1.2s ease-out infinite;
+  }
+  .orb.listening .pulse:nth-child(2) { animation-delay: 0.4s; }
+  .orb.listening .pulse:nth-child(3) { animation-delay: 0.8s; }
+  /* Speaking surge — when boundary fires we spike */
+  .orb.surge .orb-ring { transform: scale(1.05); transition: transform 90ms ease-out; }
+
+  @keyframes orb-idle {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.02); }
+  }
+  @keyframes pulse-out {
+    0%   { transform: scale(1);    opacity: 0.7; }
+    100% { transform: scale(1.55); opacity: 0; }
+  }
+
+  /* ── Call action grid ─────────────────────────────────── */
+  .actions {
+    flex-shrink: 0;
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px 36px; padding: 12px 32px 8px;
+  }
+  .action-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    background: none; border: none; cursor: pointer; color: #fff;
+    font-family: inherit; padding: 4px;
+  }
+  .action-btn .ring {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    display: grid; place-items: center;
+    transition: background 150ms;
+  }
+  .action-btn:hover .ring { background: rgba(255,255,255,0.26); }
+  .action-btn.active .ring { background: #fff; color: #000; }
+  .action-btn .ring svg { width: 30px; height: 30px; stroke: #fff; fill: none; stroke-width: 1.7;
+    stroke-linecap: round; stroke-linejoin: round; }
+  .action-btn.active .ring svg { stroke: #000; }
+  .action-btn .label { font-size: 11px; color: #fff; opacity: 0.95; font-weight: 500; }
+
+  /* End call button */
+  .end-call-row {
+    display: flex; justify-content: center; padding: 0 32px 12px; flex-shrink: 0;
+  }
+  .end-btn {
+    width: 70px; height: 70px; border-radius: 50%;
+    background: #FF3B30; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 20px rgba(255,59,48,0.4);
+  }
+  .end-btn:active { transform: scale(0.95); }
+  .end-btn svg { width: 30px; height: 30px; fill: white; }
+
+  /* Mic glow when waiting for user */
+  .action-btn.glow .ring {
+    animation: mic-glow 1.4s ease-in-out infinite;
+    background: rgba(247,171,32,0.95);
+  }
+  .action-btn.glow .ring svg { stroke: #0E0E10; }
+  .action-btn.glow .label { color: var(--gold); font-weight: 700; }
+  @keyframes mic-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(247,171,32,0.6); }
+    50%      { box-shadow: 0 0 0 14px rgba(247,171,32,0); }
+  }
+
+  /* ── Loading / call-end overlay ───────────────────────── */
+  .call-ended-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px; z-index: 50;
+    color: #fff; text-align: center; padding: 32px;
+  }
+  .call-ended-overlay.show { display: flex; animation: fade-in 220ms ease; }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .restart-btn {
+    margin-top: 8px;
+    padding: 12px 28px; border-radius: 999px;
+    background: var(--gold); border: none; color: #0E0E10;
+    font-family: inherit; font-weight: 700; font-size: 16px;
+    cursor: pointer;
+  }
+
+  .small-hint {
+    position: absolute; bottom: -36px; left: 0; right: 0; text-align: center;
+    color: var(--ink-3); font-size: 12px; font-weight: 500;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="device">
+
+  <!-- Dynamic island -->
+  <div class="island" id="island">
+    <div class="island-pill">
+      <span class="left">
+        <svg viewBox="0 0 24 24" fill="#2dd66a"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Jia
+      </span>
+      <span class="timer" id="islandTimer">00:00</span>
+    </div>
+  </div>
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="left" id="clock">9:41</div>
+    <div class="right">
+      <!-- signal -->
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="white">
+        <rect x="0"  y="9" width="3" height="5" rx="1"/>
+        <rect x="5"  y="6" width="3" height="8" rx="1"/>
+        <rect x="10" y="3" width="3" height="11" rx="1"/>
+        <rect x="15" y="0" width="3" height="14" rx="1" opacity="0.4"/>
+      </svg>
+      <!-- wifi -->
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="white">
+        <path d="M8 11.5l1.5-1.5a2.12 2.12 0 0 0-3 0L8 11.5z"/>
+        <path d="M8 8a4.5 4.5 0 0 0-3.18 1.32l1.06 1.06A3 3 0 0 1 8 9.5a3 3 0 0 1 2.12.88l1.06-1.06A4.5 4.5 0 0 0 8 8z"/>
+        <path d="M8 4.5A8 8 0 0 0 2.34 6.84l1.06 1.06A6.5 6.5 0 0 1 8 6a6.5 6.5 0 0 1 4.6 1.9l1.06-1.06A8 8 0 0 0 8 4.5z"/>
+        <path d="M8 1a11.5 11.5 0 0 0-8.13 3.37l1.07 1.07A10 10 0 0 1 8 2.5a10 10 0 0 1 7.06 2.94l1.07-1.07A11.5 11.5 0 0 0 8 1z"/>
+      </svg>
+      <!-- battery -->
+      <svg width="26" height="12" viewBox="0 0 26 12">
+        <rect x="0.5" y="0.5" width="22" height="11" rx="2.5" fill="none" stroke="white" stroke-opacity="0.5"/>
+        <rect x="2"   y="2"   width="19" height="8"  rx="1.2" fill="white"/>
+        <rect x="23"  y="4"   width="2"  height="4"  rx="0.6" fill="white" fill-opacity="0.5"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Main screen -->
+  <div class="screen show-dialer" id="screen">
+
+    <!-- ─── Dialer ─── -->
+    <div class="screen-dialer">
+      <div class="dialer-display">
+        <div class="dialer-number" id="dialerNumber"></div>
+      </div>
+      <div class="dialer-grid" id="dialerGrid"></div>
+      <div class="dialer-actions">
+        <div class="spacer"></div>
+        <button class="call-btn" id="callBtn" aria-label="Call">
+          <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </button>
+        <button class="delete-btn" id="deleteBtn" aria-label="Delete" disabled>
+          <svg viewBox="0 0 28 22" fill="white">
+            <path d="M9 0H26a2 2 0 0 1 2 2v18a2 2 0 0 1-2 2H9L0 11 9 0z" opacity="0.4"/>
+            <path d="M13 7l8 8M21 7l-8 8" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ─── Call ─── -->
+    <div class="screen-call">
+      <div class="call-header">
+        <div class="call-name">Jia</div>
+        <div class="call-state" id="callState">connecting…</div>
+      </div>
+
+      <div class="orb-area">
+        <div class="orb" id="orb">
+          <span class="pulse"></span>
+          <span class="pulse"></span>
+          <span class="pulse"></span>
+          <div class="orb-ring"></div>
+          <div class="orb-letter" id="orbLetter">J</div>
+        </div>
+      </div>
+
+      <!-- Action grid -->
+      <div class="actions">
+        <button class="action-btn" aria-label="Mute">
+          <span class="ring">
+            <svg viewBox="0 0 24 24"><path d="M9 2h6v10a3 3 0 0 1-6 0V2zM4 11a8 8 0 0 0 16 0M12 19v3"/></svg>
+          </span>
+          <span class="label">mute</span>
+        </button>
+        <button class="action-btn" aria-label="Keypad">
+          <span class="ring">
+            <svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="1.5" fill="#fff" stroke="none"/><circle cx="12" cy="6" r="1.5" fill="#fff" stroke="none"/><circle cx="18" cy="6" r="1.5" fill="#fff" stroke="none"/><circle cx="6" cy="12" r="1.5" fill="#fff" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="#fff" stroke="none"/><circle cx="18" cy="12" r="1.5" fill="#fff" stroke="none"/><circle cx="6" cy="18" r="1.5" fill="#fff" stroke="none"/><circle cx="12" cy="18" r="1.5" fill="#fff" stroke="none"/><circle cx="18" cy="18" r="1.5" fill="#fff" stroke="none"/></svg>
+          </span>
+          <span class="label">keypad</span>
+        </button>
+        <button class="action-btn active" aria-label="Audio">
+          <span class="ring">
+            <svg viewBox="0 0 24 24"><path d="M3 10v4a3 3 0 0 0 3 3h2l5 4V3L8 7H6a3 3 0 0 0-3 3z"/><path d="M16 8a5 5 0 0 1 0 8M19 5a9 9 0 0 1 0 14"/></svg>
+          </span>
+          <span class="label">audio</span>
+        </button>
+        <button class="action-btn" aria-label="Add">
+          <span class="ring">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0M18 7v6M15 10h6"/></svg>
+          </span>
+          <span class="label">add</span>
+        </button>
+        <button class="action-btn" aria-label="FaceTime">
+          <span class="ring">
+            <svg viewBox="0 0 24 24"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 8l-6 4 6 4V8z"/></svg>
+          </span>
+          <span class="label">FaceTime</span>
+        </button>
+        <!-- Mic — glows for user turn -->
+        <button class="action-btn" id="micBtn" aria-label="Speak">
+          <span class="ring">
+            <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg>
+          </span>
+          <span class="label">speak</span>
+        </button>
+      </div>
+
+      <div class="end-call-row">
+        <button class="end-btn" id="endBtn" aria-label="End call">
+          <svg viewBox="0 0 24 24"><path d="M21 15.46l-5.27-.61a1.25 1.25 0 0 0-1.06.36l-2.16 2.17a16 16 0 0 1-7.06-7.07l2.18-2.16a1.25 1.25 0 0 0 .36-1.06L7.39 1.83A1.25 1.25 0 0 0 6.16 1H3a2 2 0 0 0-2 2 22 22 0 0 0 22 22 2 2 0 0 0 2-2v-3.16a1.25 1.25 0 0 0-1-1.38z" transform="rotate(135 12 12)"/></svg>
+        </button>
+      </div>
+
+      <!-- Call ended overlay -->
+      <div class="call-ended-overlay" id="endedOverlay">
+        <div style="font-size: 28px; font-weight: 700; color: var(--gold);">Call ended</div>
+        <div style="font-size: 14px; color: rgba(255,255,255,0.7);" id="endedDuration">Duration 00:00</div>
+        <button class="restart-btn" id="restartBtn">Try the demo again</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Home indicator -->
+  <div class="home-indicator"></div>
+
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+// Jia Voice — iOS dialer + audio-only call
+// ════════════════════════════════════════════════════════════════════
+
+// ─── DOM ────────────────────────────────────────────────────────────
+const screen        = document.getElementById('screen');
+const dialerNumber  = document.getElementById('dialerNumber');
+const dialerGrid    = document.getElementById('dialerGrid');
+const callBtn       = document.getElementById('callBtn');
+const deleteBtn     = document.getElementById('deleteBtn');
+const callState     = document.getElementById('callState');
+const orb           = document.getElementById('orb');
+const orbLetter     = document.getElementById('orbLetter');
+const micBtn        = document.getElementById('micBtn');
+const endBtn        = document.getElementById('endBtn');
+const island        = document.getElementById('island');
+const islandTimer   = document.getElementById('islandTimer');
+const endedOverlay  = document.getElementById('endedOverlay');
+const endedDuration = document.getElementById('endedDuration');
+const restartBtn    = document.getElementById('restartBtn');
+const clockEl       = document.getElementById('clock');
+
+// ─── Auto-scale device to fit viewport ─────────────────────────────
+function fitDevice() {
+  const dev = document.querySelector('.device');
+  const pad = 16;
+  const sw = (window.innerWidth - pad) / 390;
+  const sh = (window.innerHeight - pad) / 856;
+  const s = Math.min(1, sw, sh);
+  dev.style.transform = `scale(${s})`;
+  dev.style.transformOrigin = 'center center';
+}
+fitDevice();
+window.addEventListener('resize', fitDevice);
+
+// ─── Live clock ─────────────────────────────────────────────────────
+function tickClock() {
+  const d = new Date();
+  let h = d.getHours(), m = d.getMinutes();
+  clockEl.textContent = h + ':' + (m < 10 ? '0'+m : m);
+}
+tickClock(); setInterval(tickClock, 30_000);
+
+// ─── Dialer keypad ──────────────────────────────────────────────────
+const KEYS = [
+  ['1', ''],     ['2', 'A B C'], ['3', 'D E F'],
+  ['4', 'G H I'],['5', 'J K L'], ['6', 'M N O'],
+  ['7', 'P Q R S'],['8', 'T U V'],['9', 'W X Y Z'],
+  ['*', ''], ['0', '+'], ['#', ''],
+];
+KEYS.forEach(([d, l]) => {
+  const b = document.createElement('button');
+  b.className = 'dial-key' + (d === '*' || d === '#' ? ' symbol' : '');
+  b.innerHTML = `<span class="digit">${d}</span><span class="letters">${l || '&nbsp;'}</span>`;
+  b.addEventListener('click', () => pressKey(d));
+  dialerGrid.appendChild(b);
+});
+
+let dialed = '';
+function pressKey(d) {
+  if (dialed.length >= 12) return;
+  dialed += d;
+  renderDialed();
+}
+function renderDialed() {
+  dialerNumber.textContent = dialed;
+  deleteBtn.disabled = dialed.length === 0;
+}
+deleteBtn.addEventListener('click', () => {
+  dialed = dialed.slice(0, -1);
+  renderDialed();
+});
+
+// Auto-type "#555" on load (cinematic intro)
+(async function autoType() {
+  await new Promise(r => setTimeout(r, 700));
+  const seq = '#555';
+  for (const c of seq) {
+    pressKey(c);
+    // visual press effect
+    const keys = [...dialerGrid.querySelectorAll('.dial-key')];
+    const found = keys.find(k => k.querySelector('.digit').textContent === c);
+    if (found) {
+      found.style.background = 'rgba(255,255,255,0.36)';
+      setTimeout(() => found.style.background = '', 140);
+    }
+    await new Promise(r => setTimeout(r, 240));
+  }
+})();
+
+// ─── Pre-generated Sarvam audio (Anushka = Jia, Manisha = Shreya) ──
+const AUDIO_CACHE = {};
+const AUDIO_CLIPS = [
+  'jia_greeting', 'shreya_weather', 'jia_weather',
+  'shreya_cricket', 'jia_cricket', 'shreya_thanks', 'jia_bye',
+];
+function preloadAudio() {
+  AUDIO_CLIPS.forEach(name => {
+    const a = new Audio(`audio/${name}.wav`);
+    a.preload = 'auto';
+    AUDIO_CACHE[name] = a;
+  });
+}
+preloadAudio();
+
+let currentAudio = null;
+function playClip(name, { onPulse } = {}) {
+  return new Promise(resolve => {
+    const a = AUDIO_CACHE[name] || new Audio(`audio/${name}.wav`);
+    if (currentAudio && currentAudio !== a) { try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(_){} }
+    currentAudio = a;
+    a.currentTime = 0;
+    let pulseInt = null;
+    const cleanup = () => { if (pulseInt) clearInterval(pulseInt); a.onended = a.onerror = null; resolve(); };
+    a.onended = cleanup;
+    a.onerror = cleanup;
+    const p = a.play();
+    if (p && p.catch) p.catch(cleanup);
+    if (onPulse) pulseInt = setInterval(onPulse, 320);
+  });
+}
+function stopAudio() {
+  if (currentAudio) { try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(_){} currentAudio = null; }
+}
+
+// ─── Orb visualizer ─────────────────────────────────────────────────
+function setOrbState(state) {
+  // states: 'idle', 'speaking' (Jia), 'listening' (user/Shreya)
+  orb.classList.remove('speaking', 'listening', 'surge');
+  if (state === 'speaking') orb.classList.add('speaking');
+  if (state === 'listening') orb.classList.add('listening');
+  orbLetter.textContent = state === 'listening' ? 'S' : 'J';
+}
+function orbSurge() {
+  orb.classList.add('surge');
+  setTimeout(() => orb.classList.remove('surge'), 90);
+}
+
+// ─── Mic glow control ───────────────────────────────────────────────
+function setMicGlow(on) {
+  if (on) micBtn.classList.add('glow');
+  else    micBtn.classList.remove('glow');
+}
+
+// ─── Conversation script (canned audio clips) ───────────────────────
+const SCRIPT = [
+  // [speaker, audio_clip_name]
+  ['jia',    'jia_greeting'],
+  ['shreya', 'shreya_weather'],
+  ['jia',    'jia_weather'],
+  ['shreya', 'shreya_cricket'],
+  ['jia',    'jia_cricket'],
+  ['shreya', 'shreya_thanks'],
+  ['jia',    'jia_bye'],
+  ['__end__'],
+];
+
+// ─── Call state machine ─────────────────────────────────────────────
+let callTimer = null;
+let callStartedAt = 0;
+let scriptIndex = 0;
+let waitingForUser = false;
+let callActive = false;
+
+function fmtDuration(ms) {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return (m < 10 ? '0' + m : m) + ':' + (r < 10 ? '0' + r : r);
+}
+
+function startCallTimer() {
+  callStartedAt = Date.now();
+  if (callTimer) clearInterval(callTimer);
+  callTimer = setInterval(() => {
+    const t = fmtDuration(Date.now() - callStartedAt);
+    callState.textContent = t;
+    islandTimer.textContent = t;
+  }, 500);
+}
+
+function stopCallTimer() {
+  if (callTimer) clearInterval(callTimer);
+  callTimer = null;
+}
+
+async function startCall() {
+  scriptIndex = 0;
+  callActive = true;
+  waitingForUser = false;
+  endedOverlay.classList.remove('show');
+  // Switch to call screen
+  screen.classList.remove('show-dialer');
+  screen.classList.add('show-call');
+  island.classList.add('expanded');
+
+  // Connecting state
+  callState.textContent = 'connecting…';
+  islandTimer.textContent = '00:00';
+  setOrbState('idle');
+  setMicGlow(false);
+
+  await new Promise(r => setTimeout(r, 1400));
+  if (!callActive) return;
+
+  // Connected
+  startCallTimer();
+  await advance();
+}
+
+async function advance() {
+  if (!callActive) return;
+  const turn = SCRIPT[scriptIndex];
+  if (!turn || turn[0] === '__end__') {
+    return endCall(true);
+  }
+  const [speaker, clipName] = turn;
+
+  if (speaker === 'jia') {
+    setOrbState('speaking');
+    setMicGlow(false);
+    await playClip(clipName, { onPulse: () => orbSurge() });
+    if (!callActive) return;
+    setOrbState('idle');
+    scriptIndex++;
+    const next = SCRIPT[scriptIndex];
+    if (next && next[0] === 'shreya') {
+      waitingForUser = true;
+      setMicGlow(true);
+    } else {
+      await new Promise(r => setTimeout(r, 600));
+      if (callActive) advance();
+    }
+  } else if (speaker === 'shreya') {
+    waitingForUser = false;
+    setMicGlow(false);
+    setOrbState('listening');
+    await playClip(clipName, { onPulse: () => orbSurge() });
+    if (!callActive) return;
+    setOrbState('idle');
+    scriptIndex++;
+    await new Promise(r => setTimeout(r, 500));
+    if (callActive) advance();
+  }
+}
+
+micBtn.addEventListener('click', () => {
+  if (!waitingForUser || !callActive) return;
+  waitingForUser = false;
+  setMicGlow(false);
+  advance();
+});
+
+endBtn.addEventListener('click', () => endCall(false));
+
+function endCall(natural) {
+  if (!callActive) return;
+  callActive = false;
+  stopAudio();
+  setOrbState('idle');
+  setMicGlow(false);
+  const dur = fmtDuration(Date.now() - callStartedAt);
+  stopCallTimer();
+  // Show ended overlay briefly
+  endedDuration.textContent = 'Duration ' + dur;
+  endedOverlay.classList.add('show');
+  // Optionally: after 3s auto-return to dialer
+  setTimeout(() => {
+    if (!callActive) returnToDialer();
+  }, 2400);
+}
+
+function returnToDialer() {
+  endedOverlay.classList.remove('show');
+  screen.classList.remove('show-call');
+  screen.classList.add('show-dialer');
+  island.classList.remove('expanded');
+}
+
+restartBtn.addEventListener('click', () => {
+  endedOverlay.classList.remove('show');
+  // Skip dialer, restart call directly
+  startCall();
+});
+
+// ─── Wire call button ───────────────────────────────────────────────
+callBtn.addEventListener('click', () => {
+  if (!dialed) return;
+  // Warm up audio playback (gesture-bound) so subsequent plays are unblocked
+  try {
+    const warm = AUDIO_CACHE['jia_greeting'];
+    if (warm) { warm.muted = true; warm.play().then(() => { warm.pause(); warm.muted = false; warm.currentTime = 0; }).catch(()=>{}); }
+  } catch(_){}
+  startCall();
+});
+</script>
+</body>
+</html>

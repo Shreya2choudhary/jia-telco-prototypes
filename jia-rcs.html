@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jia — RCS Assistant</title>
+<style>
+  @font-face { font-family: 'JioType'; font-weight: 300; font-style: normal; font-display: swap;
+    src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeVarW05-Light.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 500; font-style: normal; font-display: swap;
+    src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 700; font-style: normal; font-display: swap;
+    src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 900; font-style: normal; font-display: swap;
+    src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Black.woff2') format('woff2'); }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; font-family: 'JioType', system-ui, sans-serif; background: #0A0A0B; color: #F2F2F2; }
+  #root { min-height: 100vh; }
+
+  @keyframes jia-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes jia-bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-4px); opacity: 1; }
+  }
+  @keyframes pulse-out-overlay {
+    0%   { transform: scale(1);    opacity: 0.7; }
+    100% { transform: scale(1.6);  opacity: 0; }
+  }
+  div::-webkit-scrollbar { display: none; }
+  input, button { font-family: inherit; }
+  body::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+// ════════════════════════════════════════════════════════════════════
+// Jia RCS — single-file prototype. Mirrors the reference design.
+// ════════════════════════════════════════════════════════════════════
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ──────────────────────────────────────────────────────────────────
+// Tokens (dark gold theme — matches reference exactly)
+// ──────────────────────────────────────────────────────────────────
+const GOLD        = '#F7AB20';
+const GOLD_SOFT   = '#FFC86B';
+const GOLD_TINT   = 'rgba(247,171,32,0.12)';
+const GOLD_BORDER = 'rgba(247,171,32,0.45)';
+const INK         = '#F2F2F2';
+const INK_2       = '#A8A8A8';
+const INK_3       = '#6E6E6E';
+const LINE        = '#2A2A2A';
+const BG          = '#1C1C1E';
+const BG_DEEP     = '#0E0E10';
+
+const USER_NAME = 'Shreya';
+
+function genId() { return Math.random().toString(36).slice(2, 9); }
+function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : s; }
+
+// ──────────────────────────────────────────────────────────────────
+// Icons
+// ──────────────────────────────────────────────────────────────────
+const Ic = ({ d, size = 20, color = INK, stroke = 1.75, fill = 'none' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={color}
+    strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round">{d}</svg>
+);
+const Icons = {
+  phone: <Ic d={<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>}/>,
+  sparkles: <Ic d={<><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></>} color={GOLD}/>,
+  calendar: <Ic d={<><rect x="3" y="4.5" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></>}/>,
+  checklist: <Ic d={<><path d="M9 5h11M9 12h11M9 19h11"/><path d="M3 5l1.5 1.5L7 4M3 12l1.5 1.5L7 11M3 19l1.5 1.5L7 18"/></>}/>,
+  help: <Ic d={<><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17.02l.01-.01"/></>}/>,
+  check: <Ic d={<path d="M5 12l5 5L20 7"/>} color="#0E0E10" stroke={2.5}/>,
+  checkSmall: <Ic size={14} d={<path d="M5 12l5 5L20 7"/>} color={GOLD} stroke={2.5}/>,
+  clock: <Ic d={<><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></>}/>,
+  mapPin: <Ic d={<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></>}/>,
+  bell: <Ic d={<><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></>}/>,
+  sun: <Ic d={<><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>} color={GOLD}/>,
+  cloud: <Ic d={<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>}/>,
+  news: <Ic d={<><path d="M4 4h12a2 2 0 0 1 2 2v12a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2V4z"/><path d="M8 8h6M8 12h6M8 16h4"/></>}/>,
+  chevron: <Ic size={16} d={<path d="M9 6l6 6-6 6"/>} color={INK_2}/>,
+  user: <Ic d={<><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></>}/>,
+  stethoscope: <Ic d={<><path d="M6 3v7a4 4 0 0 0 8 0V3"/><path d="M6 3H4M14 3h2M10 14v3a4 4 0 0 0 8 0v-1"/><circle cx="18" cy="15" r="2"/></>} color={GOLD}/>,
+  utensils: <Ic d={<><path d="M3 2v7a3 3 0 0 0 6 0V2M6 12v10M14 22V11a4 4 0 0 1 4-4V2"/></>} color={GOLD}/>,
+  star: <Ic d={<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>} color={GOLD} fill={GOLD}/>,
+  navigation: <Ic d={<path d="M3 11l19-9-9 19-2-8-8-2z"/>} color={GOLD}/>,
+  cricket: <Ic d={<><circle cx="12" cy="12" r="10"/><path d="M2.5 12h19M12 2.5v19"/></>} color={GOLD}/>,
+  trophy: <Ic d={<><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M3 4h4v3a3 3 0 0 1-3 3M21 4h-4v3a3 3 0 0 0 3 3"/></>} color={GOLD}/>,
+};
+
+// ──────────────────────────────────────────────────────────────────
+// Jia avatar — gold "J" medallion
+// ──────────────────────────────────────────────────────────────────
+function JiaAvatar({ size = 28 }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: 999, flexShrink: 0,
+      background: `linear-gradient(145deg, ${GOLD_SOFT}, ${GOLD})`,
+      display: 'grid', placeItems: 'center', color: '#0E0E10',
+      fontFamily: 'JioType, system-ui', fontWeight: 900,
+      fontSize: size * 0.48, letterSpacing: '-0.02em',
+      boxShadow: '0 2px 6px rgba(247,171,32,0.35)',
+    }}>J</div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Header
+// ──────────────────────────────────────────────────────────────────
+function ChatHeader({ onReset }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '8px 8px 8px 4px', background: BG_DEEP,
+      borderBottom: `1px solid ${LINE}`,
+      position: 'sticky', top: 0, zIndex: 5,
+    }}>
+      <button onClick={onReset} aria-label="Back" style={{
+        width: 40, height: 40, borderRadius: 999, border: 'none',
+        background: 'none', display: 'grid', placeItems: 'center', cursor: 'pointer',
+      }}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <JiaAvatar size={36}/>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: INK, letterSpacing: '-0.01em', lineHeight: 1.2 }}>Jia</div>
+        <div style={{ fontSize: 12, color: INK_2, display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ width: 7, height: 7, borderRadius: 999, background: '#4ED65A', display: 'inline-block' }}/>
+          Personal assistant · RCS
+        </div>
+      </div>
+      <button aria-label="Verify" style={{
+        width: 40, height: 40, borderRadius: 999, border: 'none',
+        background: 'none', display: 'grid', placeItems: 'center', cursor: 'pointer',
+      }}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
+      </button>
+      <button aria-label="More" style={{
+        width: 40, height: 40, borderRadius: 999, border: 'none',
+        background: 'none', display: 'grid', placeItems: 'center', cursor: 'pointer',
+      }}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill={INK}><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+      </button>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Bubbles
+// ──────────────────────────────────────────────────────────────────
+function AssistantBubble({ text, showAvatar, corner }) {
+  const radius = ({
+    full: '18px',
+    top: '18px 18px 18px 6px',
+    mid: '6px 18px 18px 6px',
+    bot: '6px 18px 18px 18px',
+  })[corner] || '18px';
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, maxWidth: '82%' }}>
+      <div style={{ width: 28, flexShrink: 0 }}>
+        {showAvatar && <JiaAvatar size={28}/>}
+      </div>
+      <div style={{
+        background: '#2A2A2C', color: INK,
+        borderRadius: radius, padding: '10px 14px',
+        fontSize: 15, lineHeight: 1.4, letterSpacing: '-0.005em',
+        whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+      }}>{text}</div>
+    </div>
+  );
+}
+
+function UserBubble({ text, corner }) {
+  const radius = ({
+    full: '18px',
+    top: '18px 18px 6px 18px',
+    mid: '18px 6px 6px 18px',
+    bot: '18px 6px 18px 18px',
+  })[corner] || '18px';
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-end', maxWidth: '82%', marginLeft: 'auto' }}>
+      <div style={{
+        background: `linear-gradient(145deg, ${GOLD_SOFT}, ${GOLD})`,
+        color: '#0E0E10',
+        borderRadius: radius, padding: '10px 14px',
+        fontSize: 15, fontWeight: 600, lineHeight: 1.4, letterSpacing: '-0.005em',
+        whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+        boxShadow: '0 2px 8px rgba(247,171,32,0.25)',
+      }}>{text}</div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Typing indicator
+// ──────────────────────────────────────────────────────────────────
+function TypingIndicator() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
+      <JiaAvatar size={28}/>
+      <div style={{
+        background: '#2A2A2C',
+        borderRadius: '18px 18px 18px 6px', padding: '12px 16px',
+        display: 'flex', gap: 4,
+      }}>
+        {[0,1,2].map(i => (
+          <span key={i} style={{
+            width: 7, height: 7, borderRadius: 999, background: '#A8A8A8',
+            animation: `jia-bounce 1.2s ${i * 0.15}s ease-in-out infinite`,
+          }}/>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Chips
+// ──────────────────────────────────────────────────────────────────
+function Chips({ chips, onTap }) {
+  if (!chips || chips.length === 0) return null;
+  return (
+    <div style={{
+      display: 'flex', gap: 8, flexWrap: 'wrap',
+      paddingLeft: 34, paddingRight: 8, marginTop: 4,
+    }}>
+      {chips.map((c, i) => (
+        <button key={i} onClick={() => onTap(c)} style={{
+          padding: '7px 14px', background: 'transparent',
+          border: `1.5px solid ${GOLD_BORDER}`, color: GOLD,
+          borderRadius: 999, fontSize: 13, fontWeight: 700,
+          cursor: 'pointer', fontFamily: 'inherit',
+          transition: 'background 150ms, transform 100ms',
+          letterSpacing: '-0.005em',
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = GOLD_TINT}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
+        onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+        >{c}</button>
+      ))}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Capabilities carousel card
+// ──────────────────────────────────────────────────────────────────
+function CarouselCard({ icon, tag, title, description, onClick }) {
+  return (
+    <button onClick={onClick} style={{
+      flexShrink: 0,
+      width: 204, minHeight: 260,
+      background: BG, border: `1px solid ${LINE}`, borderRadius: 20,
+      padding: 16, textAlign: 'left', cursor: 'pointer',
+      display: 'flex', flexDirection: 'column', gap: 12,
+      boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+      transition: 'transform 150ms, box-shadow 150ms, border-color 150ms',
+      fontFamily: 'inherit',
+    }}
+    onMouseEnter={e => { e.currentTarget.style.borderColor = GOLD_BORDER; e.currentTarget.style.boxShadow = '0 4px 12px rgba(201,150,43,0.12)'; }}
+    onMouseLeave={e => { e.currentTarget.style.borderColor = LINE; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)'; }}
+    onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.98)'; }}
+    onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+    >
+      <div style={{
+        width: 44, height: 44, borderRadius: 12,
+        background: GOLD_TINT, display: 'grid', placeItems: 'center',
+      }}>{icon}</div>
+      <div style={{ flex: 1 }}>
+        <div style={{
+          fontSize: 10, fontWeight: 700, letterSpacing: '0.08em',
+          color: GOLD, textTransform: 'uppercase', marginBottom: 6,
+        }}>{tag}</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: INK, lineHeight: 1.25, marginBottom: 6, letterSpacing: '-0.01em' }}>{title}</div>
+        <div style={{ fontSize: 13, color: INK_2, lineHeight: 1.4 }}>{description}</div>
+      </div>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 4,
+        fontSize: 13, fontWeight: 700, color: GOLD,
+      }}>Try it {Icons.chevron}</div>
+    </button>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Restaurant card (NEW — Bandra restaurants flow)
+// ──────────────────────────────────────────────────────────────────
+function RestaurantCard({ name, cuisine, rating, distance, price, hero, accent, onCall, onDirections }) {
+  return (
+    <div style={{
+      flexShrink: 0, width: 224,
+      background: BG, border: `1px solid ${LINE}`, borderRadius: 20,
+      overflow: 'hidden', display: 'flex', flexDirection: 'column',
+      transition: 'border-color 150ms',
+    }}
+    onMouseEnter={e => e.currentTarget.style.borderColor = GOLD_BORDER}
+    onMouseLeave={e => e.currentTarget.style.borderColor = LINE}>
+      {/* Hero */}
+      <div style={{
+        height: 110, background: accent || GOLD_TINT,
+        display: 'grid', placeItems: 'center',
+        position: 'relative', borderBottom: `1px solid ${LINE}`,
+        backgroundImage: `radial-gradient(circle at 30% 30%, ${GOLD_SOFT}55, transparent 60%), linear-gradient(135deg, ${accent || '#3a2a14'}, #1c1c1e)`,
+      }}>
+        <div style={{ fontSize: 44, filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))' }}>{hero}</div>
+        <div style={{
+          position: 'absolute', top: 10, right: 10,
+          background: 'rgba(14,14,16,0.85)', backdropFilter: 'blur(4px)',
+          padding: '4px 8px', borderRadius: 999,
+          display: 'flex', alignItems: 'center', gap: 4,
+          fontSize: 11, fontWeight: 700, color: INK,
+        }}>
+          {Icons.star}<span>{rating}</span>
+        </div>
+      </div>
+      {/* Body */}
+      <div style={{ padding: 14, flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: GOLD, textTransform: 'uppercase' }}>{cuisine}</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: INK, letterSpacing: '-0.01em', lineHeight: 1.25 }}>{name}</div>
+        <div style={{ fontSize: 12, color: INK_2, display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+          <span>{distance}</span><span style={{ color: INK_3 }}>·</span><span>{price}</span>
+        </div>
+      </div>
+      {/* CTAs */}
+      <div style={{ display: 'flex', borderTop: `1px solid ${LINE}` }}>
+        <button onClick={onCall} style={{
+          flex: 1, padding: '11px 8px', background: 'none', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          fontSize: 12, fontWeight: 700, color: GOLD, fontFamily: 'inherit',
+        }}>{React.cloneElement(Icons.phone, { color: GOLD, size: 14 })} Call</button>
+        <button onClick={onDirections} style={{
+          flex: 1, padding: '11px 8px', background: 'none', border: 'none',
+          borderLeft: `1px solid ${LINE}`, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          fontSize: 12, fontWeight: 700, color: GOLD, fontFamily: 'inherit',
+        }}>{React.cloneElement(Icons.navigation, { color: GOLD, size: 14 })} Directions</button>
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Weather card (NEW)
+// ──────────────────────────────────────────────────────────────────
+function WeatherCard({ city, temp, condition, hi, lo, hourly = [] }) {
+  return (
+    <div style={{
+      background: BG, border: `1.5px solid ${GOLD_BORDER}`, borderRadius: 20, overflow: 'hidden',
+    }}>
+      <div style={{
+        background: `linear-gradient(135deg, ${GOLD_TINT}, ${BG} 65%)`,
+        padding: 16, display: 'flex', alignItems: 'center', gap: 14,
+      }}>
+        <div style={{ fontSize: 48 }}>☀️</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: GOLD, textTransform: 'uppercase', marginBottom: 2 }}>Right now · {city}</div>
+          <div style={{ fontSize: 30, fontWeight: 900, color: INK, letterSpacing: '-0.03em', lineHeight: 1 }}>{temp}</div>
+          <div style={{ fontSize: 13, color: INK_2, marginTop: 4 }}>{condition}</div>
+          <div style={{ fontSize: 12, color: INK_3, marginTop: 2 }}>H: {hi}° · L: {lo}°</div>
+        </div>
+      </div>
+      {hourly.length > 0 && (
+        <div style={{
+          display: 'flex', justifyContent: 'space-between',
+          padding: '12px 16px', borderTop: `1px solid ${LINE}`,
+        }}>
+          {hourly.map((h, i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <div style={{ fontSize: 11, color: INK_3, fontWeight: 600 }}>{h.t}</div>
+              <div style={{ fontSize: 18 }}>{h.icon}</div>
+              <div style={{ fontSize: 12, color: INK, fontWeight: 700 }}>{h.temp}°</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Cricket card (NEW)
+// ──────────────────────────────────────────────────────────────────
+function CricketCard({ league, status, teamA, teamB, scoreA, oversA, scoreB, oversB, ball }) {
+  return (
+    <div style={{
+      background: BG, border: `1.5px solid ${GOLD_BORDER}`, borderRadius: 20, overflow: 'hidden',
+    }}>
+      <div style={{
+        padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8,
+        borderBottom: `1px solid ${LINE}`, background: GOLD_TINT,
+      }}>
+        <div style={{ color: GOLD }}>{Icons.trophy}</div>
+        <div style={{ flex: 1, fontSize: 12, fontWeight: 700, color: INK, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{league}</div>
+        <div style={{
+          fontSize: 10, fontWeight: 800, color: '#FF5050', letterSpacing: '0.08em',
+          display: 'flex', alignItems: 'center', gap: 4,
+        }}>
+          <span style={{ width: 7, height: 7, borderRadius: 999, background: '#FF5050' }}/>LIVE
+        </div>
+      </div>
+      <div style={{ padding: '14px 16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 999, background: '#004BA0', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 800 }}>MI</div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: INK }}>{teamA}</div>
+              <div style={{ fontSize: 11, color: INK_3 }}>Batting</div>
+            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 18, fontWeight: 900, color: INK, letterSpacing: '-0.02em' }}>{scoreA}</div>
+            <div style={{ fontSize: 11, color: INK_2 }}>{oversA} ov</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderTop: `1px solid ${LINE}`, marginTop: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 999, background: '#FFD400', color: '#0E0E10', display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 800 }}>CSK</div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: INK }}>{teamB}</div>
+              <div style={{ fontSize: 11, color: INK_3 }}>Need {scoreA && parseInt(scoreA) ? parseInt(scoreA.split('/')[0]) + 1 : 0} to win</div>
+            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 18, fontWeight: 900, color: INK_2, letterSpacing: '-0.02em' }}>{scoreB}</div>
+            <div style={{ fontSize: 11, color: INK_3 }}>{oversB} ov</div>
+          </div>
+        </div>
+      </div>
+      <div style={{
+        padding: '10px 16px', borderTop: `1px solid ${LINE}`,
+        fontSize: 12, color: INK_2, display: 'flex', alignItems: 'center', gap: 8,
+        background: 'rgba(247,171,32,0.04)',
+      }}>
+        <span style={{ fontSize: 10, fontWeight: 800, color: GOLD, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{status}</span>
+        <span style={{ color: INK_3 }}>·</span>
+        <span style={{ flex: 1 }}>{ball}</span>
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Task complete card
+// ──────────────────────────────────────────────────────────────────
+function TaskCompleteCard({ title, subtitle, details = [], ctas = [], onCta }) {
+  return (
+    <div style={{
+      background: BG, border: `1.5px solid ${GOLD_BORDER}`, borderRadius: 20,
+      overflow: 'hidden', boxShadow: '0 2px 8px rgba(201,150,43,0.10)',
+    }}>
+      <div style={{
+        background: `linear-gradient(180deg, ${GOLD_TINT}, ${BG})`,
+        padding: '16px 16px 12px', display: 'flex', alignItems: 'center', gap: 12,
+      }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: 999, background: GOLD,
+          display: 'grid', placeItems: 'center', flexShrink: 0,
+        }}>{Icons.check}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: INK, letterSpacing: '-0.01em' }}>{title}</div>
+          {subtitle && <div style={{ fontSize: 13, color: INK_2, marginTop: 2 }}>{subtitle}</div>}
+        </div>
+      </div>
+      {details.length > 0 && (
+        <div style={{ padding: '4px 16px 14px' }}>
+          {details.map((d, i) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '8px 0',
+              borderTop: i === 0 ? 'none' : `1px solid ${LINE}`,
+            }}>
+              <div style={{ width: 18, display: 'grid', placeItems: 'center', color: GOLD }}>{d.icon}</div>
+              <div style={{ fontSize: 13, color: INK_2, flex: 1 }}>{d.label}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: INK }}>{d.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {ctas.length > 0 && (
+        <div style={{ display: 'flex', borderTop: `1px solid ${LINE}` }}>
+          {ctas.map((c, i) => (
+            <button key={i} onClick={() => onCta && onCta(c)}
+              style={{
+                flex: 1, padding: '14px 12px', background: 'none', border: 'none',
+                cursor: 'pointer', fontSize: 14, fontWeight: 700, color: GOLD,
+                borderLeft: i === 0 ? 'none' : `1px solid ${LINE}`,
+                fontFamily: 'inherit', letterSpacing: '-0.005em',
+              }}>{c}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Daily briefing card
+// ──────────────────────────────────────────────────────────────────
+function BriefingCard({ date, weather, calendar = [], headlines = [], onChip }) {
+  return (
+    <div style={{
+      background: BG, border: `1.5px solid ${GOLD_BORDER}`, borderRadius: 20, overflow: 'hidden',
+    }}>
+      <div style={{
+        background: `linear-gradient(135deg, ${GOLD_TINT}, ${BG} 60%)`,
+        padding: 16,
+      }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: GOLD, textTransform: 'uppercase', marginBottom: 4 }}>Daily Briefing</div>
+        <div style={{ fontSize: 18, fontWeight: 900, color: INK, letterSpacing: '-0.02em' }}>{date}</div>
+        <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div>{Icons.sun}</div>
+          <div style={{ fontSize: 14, color: INK }}>
+            <span style={{ fontWeight: 700 }}>{weather.temp}</span>
+            <span style={{ color: INK_2 }}> · {weather.desc}</span>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: '4px 16px 0' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: INK_3, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '14px 0 6px' }}>On your calendar</div>
+        {calendar.map((c, i) => (
+          <div key={i} style={{ display: 'flex', gap: 12, padding: '10px 0', borderTop: i === 0 ? 'none' : `1px solid ${LINE}` }}>
+            <div style={{ width: 54, flexShrink: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: GOLD }}>{c.time}</div>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: INK, letterSpacing: '-0.005em' }}>{c.title}</div>
+              {c.sub && <div style={{ fontSize: 12, color: INK_2, marginTop: 1 }}>{c.sub}</div>}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ padding: '4px 16px 16px' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: INK_3, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '14px 0 6px', borderTop: `1px solid ${LINE}`, marginTop: 4 }}>Top headlines</div>
+        {headlines.map((h, i) => (
+          <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 0', borderTop: i === 0 ? 'none' : `1px solid ${LINE}` }}>
+            <div style={{ width: 5, height: 5, borderRadius: 999, background: GOLD, marginTop: 9, flexShrink: 0 }}/>
+            <div style={{ flex: 1, fontSize: 13, color: INK, lineHeight: 1.45 }}>{h}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Generic horizontal carousel
+// ──────────────────────────────────────────────────────────────────
+function Carousel({ children }) {
+  const ref = useRef(null);
+  return (
+    <div style={{ marginLeft: 34 }}>
+      <div ref={ref} style={{
+        display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'visible',
+        padding: '2px 16px 8px 0',
+        scrollSnapType: 'x mandatory',
+        scrollbarWidth: 'none',
+        WebkitOverflowScrolling: 'touch',
+      }}
+      onWheel={e => { if (Math.abs(e.deltaX) < Math.abs(e.deltaY) && ref.current) { ref.current.scrollLeft += e.deltaY; e.preventDefault(); } }}
+      >
+        {React.Children.map(children, (child, i) => (
+          <div key={i} style={{ scrollSnapAlign: 'start' }}>{child}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Date divider
+// ──────────────────────────────────────────────────────────────────
+function DateDivider({ label }) {
+  return (
+    <div style={{
+      textAlign: 'center', fontSize: 12, fontWeight: 600,
+      color: INK_3, padding: '16px 0 8px',
+    }}>{label}</div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Composer
+// ──────────────────────────────────────────────────────────────────
+function Composer({ value, onChange, onSubmit, disabled }) {
+  const ref = useRef(null);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!value.trim() || disabled) return;
+    onSubmit(value.trim());
+  };
+  return (
+    <form onSubmit={handleSubmit} style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: '8px 10px 10px', background: BG_DEEP,
+      borderTop: `1px solid ${LINE}`,
+    }}>
+      <button type="button" aria-label="Add" style={{
+        width: 40, height: 40, borderRadius: 999, border: 'none',
+        background: GOLD_TINT, display: 'grid', placeItems: 'center',
+        cursor: 'pointer', flexShrink: 0,
+      }}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <div style={{
+        flex: 1, display: 'flex', alignItems: 'center', gap: 6,
+        background: '#2A2A2C', borderRadius: 999, padding: '4px 6px 4px 14px',
+        minHeight: 40,
+      }}>
+        <input ref={ref}
+          value={value} onChange={e => onChange(e.target.value)}
+          placeholder="RCS message" disabled={disabled}
+          style={{
+            flex: 1, border: 'none', background: 'none', outline: 'none',
+            fontSize: 15, color: INK, fontFamily: 'inherit',
+            minWidth: 0, padding: '6px 0',
+          }}/>
+        <button type="button" aria-label="Emoji" style={{
+          width: 32, height: 32, borderRadius: 999, border: 'none',
+          background: 'none', display: 'grid', placeItems: 'center', cursor: 'pointer',
+        }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={INK_2} strokeWidth="1.75" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+        </button>
+        <button type="button" aria-label="Image" style={{
+          width: 32, height: 32, borderRadius: 999, border: 'none',
+          background: 'none', display: 'grid', placeItems: 'center', cursor: 'pointer',
+        }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={INK_2} strokeWidth="1.75" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        </button>
+      </div>
+      {value.trim() ? (
+        <button type="submit" aria-label="Send" disabled={disabled} style={{
+          width: 40, height: 40, borderRadius: 999, border: 'none', flexShrink: 0,
+          background: `linear-gradient(145deg, ${GOLD_SOFT}, ${GOLD})`,
+          display: 'grid', placeItems: 'center', cursor: disabled ? 'default' : 'pointer',
+          boxShadow: '0 1px 2px rgba(201,150,43,0.35)',
+        }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#0E0E10"><path d="M3 12l18-8-8 18-2-8-8-2z"/></svg>
+        </button>
+      ) : (
+        <button type="button" aria-label="Voice" style={{
+          width: 40, height: 40, borderRadius: 999, border: 'none', flexShrink: 0,
+          background: GOLD_TINT, display: 'grid', placeItems: 'center', cursor: 'pointer',
+        }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.75" strokeLinecap="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg>
+        </button>
+      )}
+    </form>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Restaurant data (Bandra)
+// ──────────────────────────────────────────────────────────────────
+const RESTAURANTS = [
+  { id: 'bastian', name: 'Bastian', cuisine: 'Seafood · Asian', rating: '4.6', distance: '1.2 km', price: '₹₹₹₹', hero: '🦞', accent: '#3a1a14', address: 'Linking Rd, Bandra West' },
+  { id: 'pali', name: 'Pali Village Cafe', cuisine: 'European · Cafe', rating: '4.4', distance: '0.5 km', price: '₹₹₹', hero: '🥐', accent: '#2a2014', address: 'Pali Naka, Bandra West' },
+  { id: 'olive', name: 'Olive Bar & Kitchen', cuisine: 'Mediterranean', rating: '4.5', distance: '0.8 km', price: '₹₹₹', hero: '🫒', accent: '#1a2a14', address: 'Pali Hill, Bandra West' },
+];
+
+const RESTAURANTS_VEG = [
+  { id: 'soam',    name: 'Soam',           cuisine: 'Pure Veg · Indian', rating: '4.5', distance: '1.4 km', price: '₹₹',  hero: '🥗', accent: '#1a2a14', address: 'Babulnath' },
+  { id: 'sequel',  name: 'Sequel',         cuisine: 'Veg · Healthy',     rating: '4.4', distance: '0.4 km', price: '₹₹₹', hero: '🥬', accent: '#0f2a1f', address: 'Pali Hill, Bandra West' },
+  { id: 'palibh',  name: 'Pali Bhavan',    cuisine: 'Indian · Comfort',  rating: '4.3', distance: '0.6 km', price: '₹₹',  hero: '🍛', accent: '#3a2a10', address: 'Pali Naka, Bandra West' },
+];
+
+const RESTAURANTS_BUDGET = [
+  { id: 'palibh2', name: 'Pali Bhavan',     cuisine: 'Indian · Comfort',   rating: '4.3', distance: '0.6 km', price: '₹₹', hero: '🍛', accent: '#3a2a10', address: 'Pali Naka, Bandra West' },
+  { id: 'candies', name: 'Candies',         cuisine: 'Cafe · All-day',     rating: '4.2', distance: '1.0 km', price: '₹₹', hero: '☕', accent: '#2a1f10', address: 'St. Andrews, Bandra West' },
+  { id: 'bsc',     name: 'Bombay Salad Co', cuisine: 'Healthy · Bowls',    rating: '4.3', distance: '0.7 km', price: '₹₹', hero: '🥙', accent: '#152a14', address: 'Pali Hill, Bandra West' },
+];
+
+// ──────────────────────────────────────────────────────────────────
+// Calling overlay (full-screen "Jia is calling Bastian…" sim)
+// ──────────────────────────────────────────────────────────────────
+function CallingOverlay({ place, phase }) {
+  const labels = {
+    calling:   `Calling ${place}…`,
+    connected: `Connected — confirming your table`,
+    booked:    'Booking confirmed',
+  };
+  const subs = {
+    calling:   'Hold on — Jia is reserving for you.',
+    connected: 'Almost there.',
+    booked:    'Your table is locked in.',
+  };
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, zIndex: 50,
+      background: 'rgba(8,8,10,0.94)', backdropFilter: 'blur(10px)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      gap: 22, padding: 32, color: '#fff',
+      animation: 'jia-in 280ms ease-out both',
+    }}>
+      <div style={{ position: 'relative', width: 140, height: 140 }}>
+        {phase === 'calling' && [0,1,2].map(i => (
+          <span key={i} style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            border: `2px solid ${GOLD_BORDER}`,
+            animation: `pulse-out-overlay 1.6s ${i*0.5}s ease-out infinite`,
+          }}/>
+        ))}
+        <div style={{
+          position: 'absolute', inset: 24, borderRadius: '50%',
+          background: phase === 'booked'
+            ? 'linear-gradient(145deg, #6FE383, #25AB21)'
+            : `linear-gradient(145deg, ${GOLD_SOFT}, ${GOLD})`,
+          display: 'grid', placeItems: 'center',
+          boxShadow: phase === 'booked'
+            ? '0 0 60px rgba(78,214,90,0.5)'
+            : '0 0 60px rgba(247,171,32,0.55)',
+          transition: 'all 320ms ease',
+        }}>
+          {phase === 'booked' ? (
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+          ) : (
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="#0E0E10"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          )}
+        </div>
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{
+          fontSize: 19, fontWeight: 700,
+          color: phase === 'booked' ? '#6FE383' : INK,
+          letterSpacing: '-0.01em',
+        }}>{labels[phase]}</div>
+        <div style={{ marginTop: 6, fontSize: 13, color: INK_2 }}>{subs[phase]}</div>
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Card factory
+// ──────────────────────────────────────────────────────────────────
+function renderCard(name, props = {}, onChip) {
+  if (name === 'briefing') {
+    return <BriefingCard
+      date="Friday, 1 May" weather={{ temp: '32°C', desc: 'Sunny · Mumbai' }}
+      calendar={[
+        { time: '11:00', title: 'Ops sync with Rahul', sub: 'Google Meet · 45 min' },
+        { time: '14:30', title: 'Dentist — Dr. Patel', sub: 'Bandra Clinic · 30 min' },
+        { time: '19:00', title: 'Dinner · Ananya', sub: 'The Table, Colaba' },
+      ]}
+      headlines={[
+        'RBI holds repo rate at 6.5% for seventh straight meeting.',
+        'Mumbai monsoon forecast: early onset expected by 7 June.',
+        'Reliance reports 12% jump in Q4 digital services revenue.',
+      ]}
+      onChip={onChip}/>;
+  }
+  if (name === 'taskBill') {
+    return <TaskCompleteCard
+      title="Payment successful"
+      subtitle={`${props.merchant} · ${props.amount}`}
+      details={[
+        { icon: Icons.checkSmall, label: 'Paid via', value: 'JioPay · UPI' },
+        { icon: Icons.clock, label: 'Reference', value: 'TXN 8492 3310' },
+        { icon: Icons.calendar, label: 'When', value: 'Just now' },
+      ]}
+      ctas={['Download receipt', 'Set autopay']}
+      onCta={onChip}/>;
+  }
+  if (name === 'taskBooking') {
+    return <TaskCompleteCard
+      title="Table reserved"
+      subtitle={`${props.place} · ${props.partySize} guests`}
+      details={[
+        { icon: Icons.calendar, label: 'When', value: props.when },
+        { icon: Icons.mapPin, label: 'Where', value: props.address },
+        { icon: Icons.user, label: 'Confirmation', value: props.ref || ('BST-' + Math.floor(1000 + Math.random()*9000)) },
+      ]}
+      ctas={['Add to calendar', 'Share', 'Cancel']}
+      onCta={onChip}/>;
+  }
+  if (name === 'taskDoctor') {
+    return <TaskCompleteCard
+      title="Appointment confirmed"
+      subtitle={`${props.doctor} · ${props.place}`}
+      details={[
+        { icon: Icons.calendar,   label: 'When',  value: `${cap(props.when)}, ${props.slot?.detail || ''}` },
+        { icon: Icons.stethoscope, label: 'For',  value: props.type || 'General physician' },
+        { icon: Icons.mapPin,     label: 'Where', value: props.place },
+      ]}
+      ctas={['Set a reminder', 'Share', 'Reschedule']}
+      onCta={onChip}/>;
+  }
+  if (name === 'weather') {
+    return <WeatherCard
+      city="Bandra, Mumbai" temp="32°" condition="Sunny with light haze"
+      hi={34} lo={27}
+      hourly={[
+        { t: 'Now',  icon: '☀️', temp: 32 },
+        { t: '2 PM', icon: '☀️', temp: 33 },
+        { t: '5 PM', icon: '🌤️', temp: 31 },
+        { t: '8 PM', icon: '🌙', temp: 28 },
+        { t: '11 PM', icon: '🌙', temp: 27 },
+      ]}/>;
+  }
+  if (name === 'cricket') {
+    return <CricketCard
+      league="IPL 2026 · Match 32"
+      teamA="Mumbai Indians" scoreA="184/4" oversA="18.2"
+      teamB="Chennai Super Kings" scoreB="142/6" oversB="16.0"
+      status="Live · 2nd Innings"
+      ball="Last over: 4, 1, W, 2, 4, 1 — Jadeja struggling against Bumrah."/>;
+  }
+  return null;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Scenarios (intent-matched canned replies)
+// ──────────────────────────────────────────────────────────────────
+const SCENARIOS = [
+  // Capabilities — entry hub for "What can you do?"
+  {
+    id: 'capabilities',
+    match: /(what can you do|capabilities|features|show me what|^help$)/i,
+    reply: () => [
+      { kind: 'typing', ms: 700 },
+      { kind: 'text', text: "Plenty. Here's a quick tour — tap a card, or just type what you need." },
+      { kind: 'carousel', items: [
+        { id: 'ask',      tag: 'Ask anything',  title: 'Ask Me Anything',  description: 'Restaurants, weather, scores, facts — quick answers in one tap.', icon: 'help',        prompt: 'Ask me anything' },
+        { id: 'briefing', tag: 'Briefing',      title: 'Daily Briefing',   description: 'Weather, calendar, and headlines — one tidy snapshot.',           icon: 'calendar',    prompt: "What's my daily briefing?" },
+        { id: 'tasks',    tag: 'Pay & recharge', title: 'Bills & Recharges', description: 'Electricity, broadband, mobile — paid in seconds.',              icon: 'checklist',   prompt: 'Pay my electricity bill' },
+        { id: 'doctor',   tag: 'Health',        title: 'Book a Doctor',    description: 'Find a slot near you — Jia handles the back-and-forth.',         icon: 'stethoscope', prompt: 'Book a doctor appointment tomorrow' },
+      ] },
+    ],
+  },
+  // Ask Me Anything — sub-prompt hub
+  {
+    id: 'ask-me-anything',
+    match: /^(ask me anything|ama|surprise me|ask anything)$/i,
+    reply: () => [
+      { kind: 'typing', ms: 600 },
+      { kind: 'text', text: "Sure — try one of these, or just type your question.",
+        chips: ['Suggest restaurants near me', "Today's weather", 'Cricket score', "What's the GST on restaurants?"] },
+    ],
+  },
+  // Vegetarian filter (must come BEFORE general restaurants matcher)
+  {
+    id: 'restaurants-veg',
+    match: /\b(veg|vegetarian|vegan|plant[- ]based)\b/i,
+    reply: () => [
+      { kind: 'typing', ms: 700 },
+      { kind: 'text', text: "Got it — here are 3 great vegetarian-friendly spots:" },
+      { kind: 'restaurants', items: RESTAURANTS_VEG,
+        chips: ['Book Sequel for 2', 'Show pure-veg only', 'Back to all'] },
+    ],
+  },
+  // Cheaper / budget filter
+  {
+    id: 'restaurants-cheap',
+    match: /\b(cheaper|budget|affordable|less expensive|cheap)\b/i,
+    reply: () => [
+      { kind: 'typing', ms: 700 },
+      { kind: 'text', text: "Here are 3 budget-friendly picks — all under ₹1,500 for two." },
+      { kind: 'restaurants', items: RESTAURANTS_BUDGET,
+        chips: ['Book Pali Bhavan for 2', 'Anything closer?', 'Back to all'] },
+    ],
+  },
+  // Back to all restaurants
+  {
+    id: 'restaurants-back',
+    match: /^(back to all|show all|all restaurants?)$/i,
+    reply: () => [
+      { kind: 'typing', ms: 500 },
+      { kind: 'text', text: "Sure, here they are again:" },
+      { kind: 'restaurants', items: RESTAURANTS,
+        chips: ['Book Bastian for 2', 'Show vegetarian options', 'Anything cheaper?'] },
+    ],
+  },
+  // Closer / nearer
+  {
+    id: 'restaurants-closer',
+    match: /\b(closer|nearer|walking distance)\b/i,
+    reply: () => [
+      { kind: 'typing', ms: 600 },
+      { kind: 'text', text: "Sequel is just 400 m — a 5-min walk from yours. Want me to book?",
+        chips: ['Book Sequel for 2', 'Back to all', 'Maybe later'] },
+    ],
+  },
+  // BOOKING — triggers calling overlay
+  {
+    id: 'book-restaurant',
+    match: /\b(book|reserve|table)\b.*\b(bastian|pali|olive|sequel|soam|candies|salad|bombay|restaurant|spot)\b|\bbook\s+\w+\s+for\s+\d/i,
+    reply: (ctx, text) => {
+      const lower = text.toLowerCase();
+      const place = /bastian/.test(lower) ? 'Bastian'
+                  : /sequel/.test(lower) ? 'Sequel'
+                  : /soam/.test(lower) ? 'Soam'
+                  : /olive/.test(lower) ? 'Olive Bar & Kitchen'
+                  : /pali bhavan|palibh/.test(lower) ? 'Pali Bhavan'
+                  : /candies/.test(lower) ? 'Candies'
+                  : /salad|bombay/.test(lower) ? 'Bombay Salad Co'
+                  : 'Pali Village Cafe';
+      const partySize = (text.match(/for\s+(\d+)/) || [])[1] || '2';
+      const all = [...RESTAURANTS, ...RESTAURANTS_VEG, ...RESTAURANTS_BUDGET];
+      const r = all.find(x => x.name === place);
+      const address = r ? r.address : 'Bandra West';
+      return [
+        { kind: 'typing', ms: 700 },
+        { kind: 'text', text: `On it — calling ${place} now to book for ${partySize} tonight.` },
+        { kind: 'calling', place },
+        { kind: 'text', text: `Done! Your table at ${place} is locked in.` },
+        { kind: 'card', card: 'taskBooking', cardProps: {
+          place, partySize, when: 'Tonight, 8:00 PM', address,
+        }, chips: ['Send me directions', 'Add to calendar', 'Anything else?'] },
+      ];
+    },
+  },
+  // Call a specific restaurant (tap "Call" button on card)
+  {
+    id: 'call-restaurant',
+    match: /^call\s+(bastian|pali|olive|sequel|soam|candies|bombay)/i,
+    reply: (ctx, text) => {
+      const lower = text.toLowerCase();
+      const place = /bastian/.test(lower) ? 'Bastian'
+                  : /sequel/.test(lower) ? 'Sequel'
+                  : /soam/.test(lower) ? 'Soam'
+                  : /olive/.test(lower) ? 'Olive Bar & Kitchen'
+                  : /pali bhavan/.test(lower) ? 'Pali Bhavan'
+                  : /candies/.test(lower) ? 'Candies'
+                  : /bombay|salad/.test(lower) ? 'Bombay Salad Co'
+                  : 'Pali Village Cafe';
+      return [
+        { kind: 'typing', ms: 600 },
+        { kind: 'text', text: `Want me to call ${place} on your behalf, or pull up their direct number?`,
+          chips: [`Yes, call ${place}`, 'Just give me the number', 'Cancel'] },
+      ];
+    },
+  },
+  // Yes call X → trigger calling overlay → confirm
+  {
+    id: 'confirm-call',
+    match: /^yes,?\s*call\s+/i,
+    reply: (ctx, text) => {
+      const place = text.replace(/^yes,?\s*call\s+/i, '').trim();
+      return [
+        { kind: 'typing', ms: 600 },
+        { kind: 'calling', place },
+        { kind: 'text', text: `Spoke with ${place} — they have a window at 8 PM tonight. Want me to book?`,
+          chips: [`Book ${place} for 2`, 'Look at other options', 'Maybe later'] },
+      ];
+    },
+  },
+  // General restaurants — must come AFTER veg/cheap/back
+  {
+    id: 'restaurants',
+    match: /\b(restaurants?|food|eat|dinner|lunch|cafe|cafés|nearby|near\s*by|bandra)\b/i,
+    reply: () => [
+      { kind: 'typing', ms: 700 },
+      { kind: 'text', text: "Sure! Here are 3 great spots in Bandra right now — all open and trending tonight." },
+      { kind: 'restaurants', items: RESTAURANTS,
+        chips: ['Book Bastian for 2', 'Show vegetarian options', 'Anything cheaper?'] },
+    ],
+  },
+  // Directions
+  {
+    id: 'directions',
+    match: /^(directions?|send.*directions?|navigate|map.*route)/i,
+    reply: () => [
+      { kind: 'typing', ms: 500 },
+      { kind: 'text', text: "Sent! I've shared the route with your Maps app — about 10 minutes via Linking Road 🗺️" },
+    ],
+  },
+  // Add to calendar
+  {
+    id: 'add-calendar',
+    match: /^(add to calendar|put on calendar|calendar invite)/i,
+    reply: () => [
+      { kind: 'typing', ms: 500 },
+      { kind: 'text', text: "Done — added to your calendar with a 30-min reminder before." },
+    ],
+  },
+  // Doctor — multi-turn
+  {
+    id: 'book-doctor',
+    match: /(book|schedule|find).*(doctor|appointment|dr\b|gp)/i,
+    reply: (ctx) => {
+      ctx.flow = { name: 'doctor', step: 1, data: { when: 'tomorrow' } };
+      return [
+        { kind: 'typing', ms: 800 },
+        { kind: 'text', text: "Sure — booking a doctor for tomorrow. Morning or evening slot?",
+          chips: ['Morning', 'Evening', 'Any time'] },
+      ];
+    },
+  },
+  // Weather
+  {
+    id: 'weather',
+    match: /(weather|temperature|sunny|cloudy|humid)/i,
+    reply: () => [
+      { kind: 'typing', ms: 700 },
+      { kind: 'text', text: "It's 32°C in Bandra right now — sunny with a light haze. Comfortable evening ahead, dropping to 28° by 8 PM." },
+      { kind: 'card', card: 'weather', chips: ["Tomorrow's forecast?", 'Will it rain this week?', 'Any heat advisory?'] },
+    ],
+  },
+  // Tomorrow forecast
+  {
+    id: 'weather-tomorrow',
+    match: /tomorrow.*forecast|forecast.*tomorrow|tomorrow.*weather/i,
+    reply: () => [
+      { kind: 'typing', ms: 600 },
+      { kind: 'text', text: "Tomorrow: 31°C, partly cloudy, slight chance of an evening shower. Light umbrella, just in case ☂️" },
+    ],
+  },
+  // Rain this week
+  {
+    id: 'weather-week',
+    match: /rain.*this week|this week.*rain|rain.*coming|will it rain/i,
+    reply: () => [
+      { kind: 'typing', ms: 600 },
+      { kind: 'text', text: "No major rain this week — just brief evening showers Wednesday and Thursday. Monsoon proper kicks in around June 7th." },
+    ],
+  },
+  // Heat advisory
+  {
+    id: 'weather-heat',
+    match: /heat advisory|heat warning|too hot/i,
+    reply: () => [
+      { kind: 'typing', ms: 500 },
+      { kind: 'text', text: "No active heat advisory today — UV is moderate, stay hydrated and you're good." },
+    ],
+  },
+  // Cricket
+  {
+    id: 'cricket',
+    match: /(cricket|^score|match|ipl|mi vs|mumbai indians|csk|chennai)/i,
+    reply: () => [
+      { kind: 'typing', ms: 700 },
+      { kind: 'text', text: "MI vs CSK, Wankhede — Mumbai posted 184. Chennai's chasing now and they're behind the rate." },
+      { kind: 'card', card: 'cricket', chips: ['Full scorecard', 'When does Bumrah bowl?', 'Set match-end alert'] },
+    ],
+  },
+  // Cricket follow-ups
+  {
+    id: 'cricket-scorecard',
+    match: /(full|detailed|complete) scorecard|scorecard$/i,
+    reply: () => [
+      { kind: 'typing', ms: 700 },
+      { kind: 'text', text: "Top scorers: Suryakumar 68 (32), Tilak Varma 41 (29). Bumrah took 3 wickets. Jadeja steadying the chase for CSK at 32* (24)." },
+    ],
+  },
+  {
+    id: 'cricket-bumrah',
+    match: /bumrah/i,
+    reply: () => [
+      { kind: 'typing', ms: 500 },
+      { kind: 'text', text: "Bumrah comes back for his last over after the 18th — he's been MI's strike bowler tonight." },
+    ],
+  },
+  {
+    id: 'cricket-alert',
+    match: /(set|add).*(alert|reminder).*(match|game)|match.*end.*alert|match-end alert/i,
+    reply: () => [
+      { kind: 'typing', ms: 500 },
+      { kind: 'text', text: "Done — I'll ping you the moment the match ends 🏏" },
+    ],
+  },
+  // Pre-order
+  {
+    id: 'preorder',
+    match: /pre[- ]?order/i,
+    reply: () => [
+      { kind: 'typing', ms: 500 },
+      { kind: 'text', text: "Sure — what would you like to pre-order? I can pass it along when I confirm the booking.",
+        chips: ['Their tasting menu', 'Just drinks', 'Skip pre-order'] },
+    ],
+  },
+  // Pay bill (multi-turn)
+  {
+    id: 'pay-bill',
+    match: /(pay|clear).*(bill|electricity|water|recharge|mobile|dth|broadband)|^recharge$/i,
+    reply: (ctx) => {
+      ctx.flow = { name: 'bill', step: 1, data: {} };
+      return [
+        { kind: 'typing', ms: 700 },
+        { kind: 'text', text: "Happy to. Which one — electricity, broadband, or mobile recharge?",
+          chips: ['Electricity', 'Broadband', 'Mobile recharge'] },
+      ];
+    },
+  },
+  // Daily briefing
+  {
+    id: 'briefing',
+    match: /(daily )?briefing|brief me|what'?s (on )?today|my day|agenda/i,
+    reply: () => [
+      { kind: 'typing', ms: 900 },
+      { kind: 'text', text: `Good morning, ${USER_NAME}. Here's your Friday in one view.` },
+      { kind: 'card', card: 'briefing', chips: ['Traffic to office?', 'Move my 11 AM later', 'Read me the news'] },
+    ],
+  },
+  // Briefing follow-ups
+  {
+    id: 'traffic',
+    match: /traffic/i,
+    reply: () => [
+      { kind: 'typing', ms: 500 },
+      { kind: 'text', text: "BKC to your office is clear — 18 minutes via SCLR. No incidents on the route." },
+    ],
+  },
+  {
+    id: 'move-meeting',
+    match: /move.*\d+|reschedule|push.*meeting|move.*later/i,
+    reply: () => [
+      { kind: 'typing', ms: 600 },
+      { kind: 'text', text: "Done — your 11 AM with Rahul has been moved to 11:30. Calendar invite updated and Rahul has been notified." },
+    ],
+  },
+  {
+    id: 'read-news',
+    match: /(read|tell).*(news|headlines)/i,
+    reply: () => [
+      { kind: 'typing', ms: 700 },
+      { kind: 'text', text: "Top story: RBI held the repo rate at 6.5%. Mumbai's monsoon is forecast a bit early this year — June 7. And Reliance posted a strong Q4 with digital services up 12%." },
+    ],
+  },
+  // Reminder
+  {
+    id: 'reminder',
+    match: /(set|add|remind).*(reminder|remind me)/i,
+    reply: () => [
+      { kind: 'typing', ms: 600 },
+      { kind: 'text', text: "Of course. What should I remind you about, and when?" },
+    ],
+  },
+  // GST trivia
+  {
+    id: 'ama-gst',
+    match: /gst.*(restaurant|food|dining)/i,
+    reply: () => [
+      { kind: 'typing', ms: 800 },
+      { kind: 'text', text: "Restaurant GST in India is typically 5% without input credit — most standalone places, cafés, and takeaways. Hotel-attached restaurants where rooms exceed ₹7,500/night charge 18%." },
+    ],
+  },
+  // Cancel / not now
+  {
+    id: 'cancel',
+    match: /^(cancel|no|not now|maybe later|skip|no thanks)\.?$/i,
+    reply: () => [
+      { kind: 'typing', ms: 400 },
+      { kind: 'text', text: "Got it — letting that go. Anything else?" },
+    ],
+  },
+  // Anything else
+  {
+    id: 'continue',
+    match: /^(anything else\??|what next\??|now what\??)$/i,
+    reply: () => [
+      { kind: 'typing', ms: 500 },
+      { kind: 'text', text: "Always! Try a daily briefing, ask about cricket, or get a recharge done.",
+        chips: ['Daily briefing', 'Cricket score', 'Pay my bill'] },
+    ],
+  },
+  // Catch-all polite responses for the chips on the cards
+  {
+    id: 'share',
+    match: /^(share|share with family)/i,
+    reply: () => [
+      { kind: 'typing', ms: 400 },
+      { kind: 'text', text: "Shared — your family group will see it in a moment 👍" },
+    ],
+  },
+  {
+    id: 'set-reminder-task',
+    match: /^(set a reminder)/i,
+    reply: () => [
+      { kind: 'typing', ms: 400 },
+      { kind: 'text', text: "Reminder set — I'll nudge you 30 minutes before." },
+    ],
+  },
+  {
+    id: 'reschedule-task',
+    match: /^reschedule/i,
+    reply: () => [
+      { kind: 'typing', ms: 500 },
+      { kind: 'text', text: "Sure — when would you like to move it to?",
+        chips: ['Tomorrow morning', 'This weekend', 'Cancel instead'] },
+    ],
+  },
+  {
+    id: 'just-number',
+    match: /^just give me the number|just the number/i,
+    reply: () => [
+      { kind: 'typing', ms: 400 },
+      { kind: 'text', text: "Bastian: +91 22 4567 8901. Tap to call." },
+    ],
+  },
+];
+
+// Multi-turn flow advance (bills + doctor)
+function advanceFlow(ctx, text) {
+  const f = ctx.flow;
+  if (!f) return null;
+  const lower = text.toLowerCase();
+
+  // ── Doctor ──────────────────────────────────────────────────
+  if (f.name === 'doctor') {
+    if (f.step === 1) {
+      let slot = null;
+      if (/morning/.test(lower)) slot = { label: 'Morning', detail: '10:30 AM' };
+      else if (/evening/.test(lower)) slot = { label: 'Evening', detail: '6:30 PM' };
+      else if (/any/.test(lower))    slot = { label: 'Any time', detail: '11:00 AM' };
+      if (!slot) return null;
+      f.data.slot = slot; f.step = 2;
+      return [
+        { kind: 'typing', ms: 700 },
+        { kind: 'text', text: `${slot.label} works. General physician or a specialist?`,
+          chips: ['General physician', 'Dermatologist', 'Dentist'] },
+      ];
+    }
+    if (f.step === 2) {
+      let type = /general|gp|physician/.test(lower) ? 'General physician'
+               : /derm/.test(lower) ? 'Dermatologist'
+               : /dent/.test(lower) ? 'Dentist'
+               : /cardio/.test(lower) ? 'Cardiologist'
+               : text.trim();
+      f.data.type = type; f.step = 3;
+      return [
+        { kind: 'typing', ms: 800 },
+        { kind: 'text', text: `Found 3 nearby ${type.toLowerCase()}s with open slots. Go with your regular, Dr. Anita Rao at Lilavati?`,
+          chips: ['Yes, Dr. Anita Rao', 'Show all 3'] },
+      ];
+    }
+    if (f.step === 3) {
+      if (/show all|all 3|other/.test(lower) && !/yes|anita/.test(lower)) {
+        f.step = 3.5;
+        return [
+          { kind: 'typing', ms: 700 },
+          { kind: 'text', text: "Three available within your slot:",
+            chips: ['Dr. Anita Rao · Lilavati', 'Dr. Sameer Kulkarni · Holy Family', 'Dr. Priya Shah · Nanavati Max'] },
+        ];
+      }
+      f.data.doctor = /kulkarni/.test(lower) ? 'Dr. Sameer Kulkarni'
+                    : /priya|shah/.test(lower) ? 'Dr. Priya Shah'
+                    : 'Dr. Anita Rao';
+      f.data.place  = /kulkarni/.test(lower) ? 'Holy Family Hospital'
+                    : /priya|shah/.test(lower) ? 'Nanavati Max'
+                    : 'Lilavati Hospital';
+      f.step = 4;
+      return [
+        { kind: 'typing', ms: 700 },
+        { kind: 'text', text: 'Locked. Confirm the booking?',
+          chips: ['Yes, confirm', 'Cancel'] },
+      ];
+    }
+    if (f.step === 3.5) {
+      f.data.doctor = /kulkarni/.test(lower) ? 'Dr. Sameer Kulkarni'
+                    : /priya|shah/.test(lower) ? 'Dr. Priya Shah'
+                    : 'Dr. Anita Rao';
+      f.data.place  = /kulkarni/.test(lower) ? 'Holy Family Hospital'
+                    : /priya|shah/.test(lower) ? 'Nanavati Max'
+                    : 'Lilavati Hospital';
+      f.step = 4;
+      return [
+        { kind: 'typing', ms: 700 },
+        { kind: 'text', text: `Good choice — ${f.data.doctor}, ${f.data.place}. Confirm the booking for ${f.data.when}, ${f.data.slot.detail}?`,
+          chips: ['Yes, confirm', 'Cancel'] },
+      ];
+    }
+    if (f.step === 4) {
+      if (/cancel|no/.test(lower)) {
+        ctx.flow = null;
+        return [{ kind: 'text', text: "Okay — nothing booked. Want to try a different time?" }];
+      }
+      if (!/confirm|yes|go ahead|do it|sure/.test(lower)) return null;
+      const booking = { ...f.data };
+      ctx.flow = null;
+      return [
+        { kind: 'typing', ms: 1000 },
+        { kind: 'text', text: 'Done. Your appointment is booked.' },
+        { kind: 'card', card: 'taskDoctor', cardProps: booking, chips: ['Set a reminder', 'Share with family', 'Add to calendar'] },
+      ];
+    }
+  }
+
+  if (f.name === 'bill') {
+    if (f.step === 1) {
+      let type = /elect/.test(lower) ? 'Electricity' : /broad|wifi|internet/.test(lower) ? 'Broadband' : /mobile|recharge|phone/.test(lower) ? 'Mobile recharge' : null;
+      if (!type) return null;
+      f.data.type = type;
+      f.step = 2;
+      const blurb = type === 'Mobile recharge'
+        ? `Your Jio number ending 4421 — recharge with your usual ₹399 plan (28 days, unlimited)?`
+        : type === 'Electricity'
+          ? `Adani Electricity — outstanding is ₹2,847, due in 4 days. Pay now from JioPay?`
+          : `JioFiber 999 plan — ₹1,177 due tomorrow. Pay now?`;
+      return [{ kind: 'typing', ms: 700 }, { kind: 'text', text: blurb }];
+    }
+    if (f.step === 2) {
+      if (/no|cancel|remind/.test(lower) && !/yes/.test(lower)) {
+        ctx.flow = null;
+        return [{ kind: 'text', text: "Okay — I'll remind you tomorrow morning." }];
+      }
+      if (!/yes|pay|go|sure|399|2847|1177/.test(lower)) return null;
+      const amount = f.data.type === 'Electricity' ? '₹2,847' : f.data.type === 'Broadband' ? '₹1,177' : '₹399';
+      const merchant = f.data.type === 'Electricity' ? 'Adani Electricity' : f.data.type === 'Broadband' ? 'JioFiber' : 'Jio Recharge';
+      ctx.flow = null;
+      return [
+        { kind: 'typing', ms: 1100 },
+        { kind: 'text', text: 'Paid.' },
+        { kind: 'card', card: 'taskBill', cardProps: { amount, merchant, type: f.data.type }, chips: ['Download receipt', 'Set autopay', 'Anything else?'] },
+      ];
+    }
+  }
+  return null;
+}
+
+// Brain dispatcher
+function jiaRespond(ctx, userText) {
+  const flowReply = advanceFlow(ctx, userText);
+  if (flowReply) return flowReply;
+  for (const s of SCENARIOS) {
+    if (s.match.test(userText)) return s.reply(ctx, userText);
+  }
+  // Friendly fallback that keeps the demo moving (no "not wired up")
+  return [
+    { kind: 'typing', ms: 600 },
+    { kind: 'text', text: "Got it — let me think about that. In the meantime, want to try one of these?",
+      chips: ['What can you do?', 'Daily briefing', 'Suggest restaurants near me'] },
+  ];
+}
+
+// Initial assistant messages — discovery-first, mirrors the reference
+function initialMessages() {
+  return [
+    { kind: 'text', role: 'assistant',
+      text: `Hello ${USER_NAME} 👋 welcome!`, id: 'init-1' },
+    { kind: 'text', role: 'assistant',
+      text: "I'm Jia, your personal assistant. What can I help you with today?",
+      chips: ['What can you do?', "What's my daily briefing?", 'Book a doctor appointment'],
+      id: 'init-2' },
+  ];
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Message list
+// ──────────────────────────────────────────────────────────────────
+function MessageList({ messages, typing, onChip }) {
+  const scrollRef = useRef(null);
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages.length, typing]);
+
+  return (
+    <div ref={scrollRef} style={{
+      flex: 1, overflowY: 'auto', padding: '8px 12px 12px',
+      display: 'flex', flexDirection: 'column', gap: 3,
+      background: BG_DEEP,
+    }}>
+      <DateDivider label="Today, 9:42 AM"/>
+      {messages.map((m, i) => {
+        const prev = messages[i - 1];
+        const next = messages[i + 1];
+        const samePrev = prev && prev.role === m.role && prev.kind === 'text' && m.kind === 'text';
+        const sameNext = next && next.role === m.role && next.kind === 'text' && m.kind === 'text';
+        const corner = samePrev && sameNext ? 'mid' : samePrev ? 'bot' : sameNext ? 'top' : 'full';
+        const showAvatar = m.role === 'assistant' && (!sameNext || next.kind !== 'text');
+
+        return (
+          <div key={m.id || i} style={{
+            animation: 'jia-in 280ms ease-out both',
+            marginTop: samePrev ? 2 : 8,
+          }}>
+            {m.kind === 'text' && m.role === 'assistant' && (
+              <>
+                <AssistantBubble text={m.text} showAvatar={showAvatar} corner={corner}/>
+                {m.chips && <Chips chips={m.chips} onTap={onChip}/>}
+              </>
+            )}
+            {m.kind === 'text' && m.role === 'user' && (
+              <UserBubble text={m.text} corner={corner}/>
+            )}
+            {m.kind === 'carousel' && (
+              <>
+                <Carousel>
+                  {m.items.map(it => (
+                    <CarouselCard key={it.id}
+                      icon={React.cloneElement(Icons[it.icon] || Icons.help, { color: GOLD })}
+                      tag={it.tag} title={it.title} description={it.description}
+                      onClick={() => onChip(it.prompt)}/>
+                  ))}
+                </Carousel>
+                {m.chips && <Chips chips={m.chips} onTap={onChip}/>}
+              </>
+            )}
+            {m.kind === 'restaurants' && (
+              <>
+                <Carousel>
+                  {m.items.map(r => (
+                    <RestaurantCard key={r.id}
+                      name={r.name} cuisine={r.cuisine} rating={r.rating}
+                      distance={r.distance} price={r.price} hero={r.hero} accent={r.accent}
+                      onCall={() => onChip(`Call ${r.name}`)}
+                      onDirections={() => onChip(`Directions to ${r.name}`)}/>
+                  ))}
+                </Carousel>
+                {m.chips && <Chips chips={m.chips} onTap={onChip}/>}
+              </>
+            )}
+            {m.kind === 'card' && (
+              <>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end' }}>
+                  <div style={{ width: 28, flexShrink: 0 }}>
+                    {showAvatar && <JiaAvatar size={28}/>}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0, maxWidth: '86%' }}>
+                    {renderCard(m.card, m.cardProps || {}, onChip)}
+                  </div>
+                </div>
+                {m.chips && <Chips chips={m.chips} onTap={onChip}/>}
+              </>
+            )}
+          </div>
+        );
+      })}
+      {typing && (
+        <div style={{ marginTop: 8, animation: 'jia-in 200ms ease-out' }}>
+          <TypingIndicator/>
+        </div>
+      )}
+      <div style={{ height: 4 }}/>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Android M3 device frame
+// ──────────────────────────────────────────────────────────────────
+function AndroidStatusBar({ dark = true }) {
+  const c = dark ? '#fff' : '#171d1b';
+  return (
+    <div style={{
+      height: 40, display: 'flex', alignItems: 'center',
+      justifyContent: 'space-between', padding: '0 16px',
+      position: 'relative', flexShrink: 0,
+      fontFamily: 'Roboto, system-ui, sans-serif', background: BG_DEEP,
+    }}>
+      <div style={{ width: 128, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 14, fontWeight: 500, letterSpacing: 0.25, lineHeight: '20px', color: c }}>9:42</span>
+      </div>
+      <div style={{
+        position: 'absolute', left: '50%', top: 8, transform: 'translateX(-50%)',
+        width: 24, height: 24, borderRadius: 100, background: '#2e2e2e',
+      }}/>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', paddingRight: 4, gap: 2 }}>
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <path d="M8 13.3L.67 5.97a10.37 10.37 0 0114.66 0L8 13.3z" fill={c}/>
+          </svg>
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <path d="M14.67 14.67V1.33L1.33 14.67h13.34z" fill={c}/>
+          </svg>
+        </div>
+        <svg width="22" height="16" viewBox="0 0 22 16">
+          <rect x="2" y="3" width="16" height="10" rx="2" fill="none" stroke={c} strokeWidth="1.2"/>
+          <rect x="4" y="5" width="11" height="6" rx="1" fill={c}/>
+          <rect x="19" y="6" width="2" height="4" rx="0.5" fill={c}/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+function AndroidNavBar({ dark = true }) {
+  return (
+    <div style={{
+      height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0, background: BG_DEEP,
+    }}>
+      <div style={{ width: 108, height: 4, borderRadius: 2, background: dark ? '#fff' : '#171d1b', opacity: 0.4 }}/>
+    </div>
+  );
+}
+function AndroidDevice({ children, width = 390, height = 760, dark = true }) {
+  return (
+    <div style={{
+      width, height, borderRadius: 18, overflow: 'hidden',
+      background: dark ? '#1d1b20' : '#f4fbf8',
+      border: `8px solid rgba(116,119,117,0.5)`,
+      boxShadow: '0 30px 80px rgba(0,0,0,0.25)',
+      display: 'flex', flexDirection: 'column', boxSizing: 'border-box',
+    }}>
+      <AndroidStatusBar dark={dark}/>
+      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {children}
+      </div>
+      <AndroidNavBar dark={dark}/>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// App
+// ──────────────────────────────────────────────────────────────────
+function JiaApp() {
+  const [messages, setMessages] = useState(() => initialMessages().map(m => ({ ...m, id: m.id || genId() })));
+  const [typing, setTyping] = useState(false);
+  const [input, setInput] = useState('');
+  const [disabled, setDisabled] = useState(false);
+  const [overlay, setOverlay] = useState(null); // { place, phase: 'calling'|'connected'|'booked' }
+  const ctxRef = useRef({ flow: null });
+
+  const typingDelay = (ms) => new Promise(r => setTimeout(r, ms));
+
+  const playReply = useCallback(async (reply) => {
+    setDisabled(true);
+    for (const item of reply) {
+      if (item.kind === 'typing') {
+        setTyping(true);
+        await typingDelay(item.ms || 800);
+        setTyping(false);
+        continue;
+      }
+      if (item.kind === 'calling') {
+        setOverlay({ place: item.place, phase: 'calling' });
+        await typingDelay(2400);
+        setOverlay({ place: item.place, phase: 'connected' });
+        await typingDelay(1700);
+        setOverlay({ place: item.place, phase: 'booked' });
+        await typingDelay(1300);
+        setOverlay(null);
+        continue;
+      }
+      setMessages(prev => [...prev, { ...item, role: 'assistant', id: genId() }]);
+      await typingDelay(280);
+    }
+    setDisabled(false);
+  }, []);
+
+  const handleUserMessage = useCallback(async (text, opts = {}) => {
+    if (!text || !text.trim() || disabled) return;
+    if (!opts.silent) {
+      setMessages(prev => [...prev, { kind: 'text', role: 'user', text: text.trim(), id: genId() }]);
+    }
+    setInput('');
+    setDisabled(true);
+
+    await typingDelay(280);
+    setTyping(true);
+
+    const reply = jiaRespond(ctxRef.current, text.trim());
+    setTyping(false);
+
+    await playReply(reply);
+  }, [disabled, playReply]);
+
+  const handleReset = () => {
+    ctxRef.current = { flow: null };
+    setMessages(initialMessages().map(m => ({ ...m, id: m.id || genId() })));
+    setInput('');
+    setDisabled(false);
+    setTyping(false);
+  };
+
+  return (
+    <div style={{
+      minHeight: '100vh', width: '100%', background: '#0A0A0B',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '12px 16px', boxSizing: 'border-box',
+      fontFamily: "'JioType', system-ui, sans-serif",
+    }}>
+      <AndroidDevice width={390} height={760} dark={true}>
+        <div style={{
+          height: '100%', display: 'flex', flexDirection: 'column',
+          background: BG_DEEP, overflow: 'hidden', position: 'relative',
+          fontFamily: "'JioType', system-ui, sans-serif",
+        }}>
+          <ChatHeader onReset={handleReset}/>
+          <MessageList messages={messages} typing={typing} onChip={handleUserMessage}/>
+          <Composer value={input} onChange={setInput} onSubmit={handleUserMessage} disabled={disabled}/>
+          {overlay && <CallingOverlay place={overlay.place} phase={overlay.phase}/>}
+        </div>
+      </AndroidDevice>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<JiaApp/>);
+</script>
+</body>
+</html>
