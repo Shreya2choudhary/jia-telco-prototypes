@@ -772,12 +772,13 @@ const SCENARIOS = [
       const all = [...RESTAURANTS, ...RESTAURANTS_VEG, ...RESTAURANTS_BUDGET];
       const r = all.find(x => x.name === place);
       const address = r ? r.address : 'Bandra West';
+      const ref = 'BST-' + Math.floor(1000 + Math.random()*9000);
       return [
         { kind: 'typing', ms: 700 },
         { kind: 'text', text: `On it — calling ${place} now to book for ${partySize} tonight.` },
         { kind: 'calling', place },
         { kind: 'text', text: `Done! Your table at ${place} is locked in.` },
-        { kind: 'card', card: 'taskBooking', cardProps: { place, partySize, when: 'Tonight, 8:00 PM', address },
+        { kind: 'card', card: 'taskBooking', cardProps: { place, partySize, when: 'Tonight, 8:00 PM', address, ref },
           chips: ['Send me directions', 'Add to calendar', 'Anything else?'] },
       ];
     },
@@ -1018,6 +1019,7 @@ function App() {
   const [rcsDisabled, setRcsDisabled] = useState(false);
   const [overlay,     setOverlay]     = useState(null);
   const [callDropped, setCallDropped] = useState(false);
+  const [showEndedPill, setShowEndedPill] = useState(false);
   const callStartRef = useRef(0);
   const timerRef     = useRef(null);
   const phaseRef     = useRef(phase);
@@ -1061,6 +1063,7 @@ function App() {
 
   // Push booking confirmation messages (after second voice handoff)
   const pushBookingConfirmation = useCallback(async () => {
+    const ref = 'BST-' + Math.floor(1000 + Math.random()*9000);
     setRcsTyping(true); await sleep(900); setRcsTyping(false);
     setRcsMessages(prev => [...prev, { id: genId(), role: 'assistant', kind: 'text', text: 'On it — calling Bastian now to book your table for 2 tonight.' }]);
     await sleep(300);
@@ -1076,9 +1079,12 @@ function App() {
     await sleep(280);
     setRcsMessages(prev => [...prev, {
       id: genId(), role: 'assistant', kind: 'card', card: 'taskBooking',
-      cardProps: { place: 'Bastian', partySize: '2', when: 'Tonight, 8:00 PM', address: 'Linking Rd, Bandra West' },
+      cardProps: { place: 'Bastian', partySize: '2', when: 'Tonight, 8:00 PM', address: 'Linking Rd, Bandra West', ref },
       chips: ['Send me directions', 'Add to calendar', 'Anything else?'],
     }]);
+    // Auto-dismiss the "Call ended" pill once booking has landed
+    await sleep(1500);
+    setShowEndedPill(false);
   }, []);
 
   const advanceCallRef = useRef(null);
@@ -1110,6 +1116,7 @@ function App() {
       setOrbState('idle'); setMicGlow(false);
       setPhase('pip');
       setCallDropped(true);
+      setShowEndedPill(true);
       // Stop the call timer
       if (timerRef.current) clearInterval(timerRef.current);
       // Now push the booking flow to RCS (calling overlay + confirmation card)
@@ -1152,7 +1159,7 @@ function App() {
     setCallTime('connecting…');
     setScriptIdx(0); setMicGlow(false); setOrbState('idle');
     setRcsMessages([]); setRcsTyping(false); setOverlay(null);
-    setCallDropped(false);
+    setCallDropped(false); setShowEndedPill(false);
     try {
       const warm = AUDIO_CACHE['jia_greeting'];
       if (warm) { warm.muted = true; warm.play().then(() => { warm.pause(); warm.muted = false; warm.currentTime = 0; }).catch(()=>{}); }
@@ -1191,7 +1198,7 @@ function App() {
     callStartRef.current = 0;
     setCallTime('connecting…');
     setRcsMessages([]); setOverlay(null); setRcsTyping(false);
-    setCallDropped(false);
+    setCallDropped(false); setShowEndedPill(false);
     setPhase('dialer');
   };
 
@@ -1228,13 +1235,27 @@ function App() {
     const reply = jiaRespond(text.trim());
     setRcsTyping(false);
     await playRcsReply(reply);
-  }, [rcsDisabled, playRcsReply]);
+    // Model A: if this was a booking and the call is still active, drop it with a farewell
+    const isBooking = /\bbook\b.*\bfor\s+\d/i.test(text);
+    if (isBooking && !callDropped) {
+      setRcsTyping(true); await sleep(700); setRcsTyping(false);
+      setRcsMessages(prev => [...prev, { id: genId(), role: 'assistant', kind: 'text',
+        text: 'All done — dropping the call. Ping me anytime 👋' }]);
+      await sleep(900);
+      setCallDropped(true);
+      setShowEndedPill(true);
+      if (timerRef.current) clearInterval(timerRef.current);
+      // Auto-dismiss the ended pill after a beat
+      await sleep(2200);
+      setShowEndedPill(false);
+    }
+  }, [rcsDisabled, playRcsReply, callDropped]);
 
   return (
     <div className="device">
       <DynamicIsland
-        expanded={phase === 'call' || phase === 'pip'}
-        dropped={callDropped}
+        expanded={(phase === 'call' || phase === 'pip') && (!callDropped || showEndedPill)}
+        dropped={callDropped && showEndedPill}
         timer={phase === 'connecting' ? '00:00' : (phase === 'call' || phase === 'pip') ? callTime : '00:00'}
         onClick={callDropped ? undefined : expandCall}/>
       <StatusBar time={statusTime}/>
