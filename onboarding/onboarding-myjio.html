@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jia — MyJio Onboarding</title>
+<style>
+  @font-face { font-family: 'JioType'; font-weight: 500; font-style: normal; font-display: swap;
+    src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 700; font-style: normal; font-display: swap;
+    src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 900; font-style: normal; font-display: swap;
+    src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Black.woff2') format('woff2'); }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --gold: #F7AB20;
+    --gold-soft: #FFC86B;
+    --gold-tint: rgba(247,171,32,0.12);
+    --ink: #F2F2F2;
+    --ink-2: #A8A8A8;
+    --ink-3: #6E6E6E;
+  }
+  html, body {
+    height: 100%; width: 100%;
+    font-family: 'JioType', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: #0A0A0B; color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100dvh; padding: 16px;
+  }
+  .device {
+    width: 390px; height: 844px;
+    border-radius: 54px;
+    background: #000;
+    border: 6px solid #1a1a1a;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06) inset;
+    overflow: hidden;
+    position: relative;
+    display: flex; flex-direction: column;
+    transform-origin: center center;
+  }
+  .island {
+    position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 122px; height: 36px; border-radius: 999px;
+    background: #000; z-index: 100;
+  }
+  .status-bar {
+    height: 54px; flex-shrink: 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 16px 32px 0;
+    color: #fff; font-size: 17px; font-weight: 600;
+    z-index: 5; position: relative; pointer-events: none;
+  }
+  .status-bar .right { display: flex; align-items: center; gap: 4px; }
+  .home-indicator {
+    height: 30px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .home-indicator::before {
+    content: ''; width: 134px; height: 5px; border-radius: 999px; background: rgba(255,255,255,0.6);
+  }
+
+  /* MyJio splash */
+  .myjio {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 32px 28px;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(247,171,32,0.18), transparent 50%),
+      radial-gradient(circle at 70% 80%, rgba(53,53,243,0.12), transparent 60%),
+      #0a0a0b;
+  }
+  .logo {
+    width: 110px; height: 110px; border-radius: 28px;
+    background: linear-gradient(145deg, #FFC86B 0%, #F7AB20 60%, #b06f00 100%);
+    display: grid; place-items: center;
+    color: #0E0E10; font-weight: 900; font-size: 56px; letter-spacing: -0.04em;
+    box-shadow: 0 12px 40px rgba(247,171,32,0.35), 0 0 0 1px rgba(255,255,255,0.06) inset;
+    margin-bottom: 28px;
+  }
+  .badge {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.14em; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 12px;
+    padding: 6px 12px; background: var(--gold-tint); border-radius: 999px;
+  }
+  .title {
+    font-size: 30px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.1;
+    color: #fff; margin-bottom: 12px;
+  }
+  .sub {
+    font-size: 15px; color: var(--ink-2); line-height: 1.5; max-width: 280px;
+    margin-bottom: 32px;
+  }
+  .feature {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    padding: 10px 14px; border-radius: 14px;
+    margin-bottom: 8px; width: 100%; max-width: 300px;
+    font-size: 13px; color: var(--ink); text-align: left;
+  }
+  .feature .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--gold); flex-shrink: 0; }
+  .back {
+    margin-top: 32px;
+    padding: 12px 24px; border-radius: 999px;
+    background: var(--gold); border: none; color: #0E0E10;
+    font-family: inherit; font-weight: 700; font-size: 15px;
+    cursor: pointer; text-decoration: none; display: inline-block;
+  }
+  .back:active { transform: scale(0.97); }
+</style>
+</head>
+<body>
+<div class="device">
+  <div class="island"></div>
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="right">
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="white">
+        <rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6" width="3" height="8" rx="1"/>
+        <rect x="10" y="3" width="3" height="11" rx="1"/><rect x="15" y="0" width="3" height="14" rx="1" opacity="0.4"/>
+      </svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="white">
+        <path d="M8 11.5l1.5-1.5a2.12 2.12 0 0 0-3 0L8 11.5z"/>
+        <path d="M8 8a4.5 4.5 0 0 0-3.18 1.32l1.06 1.06A3 3 0 0 1 8 9.5a3 3 0 0 1 2.12.88l1.06-1.06A4.5 4.5 0 0 0 8 8z"/>
+        <path d="M8 4.5A8 8 0 0 0 2.34 6.84l1.06 1.06A6.5 6.5 0 0 1 8 6a6.5 6.5 0 0 1 4.6 1.9l1.06-1.06A8 8 0 0 0 8 4.5z"/>
+        <path d="M8 1a11.5 11.5 0 0 0-8.13 3.37l1.07 1.07A10 10 0 0 1 8 2.5a10 10 0 0 1 7.06 2.94l1.07-1.07A11.5 11.5 0 0 0 8 1z"/>
+      </svg>
+      <svg width="26" height="12" viewBox="0 0 26 12">
+        <rect x="0.5" y="0.5" width="22" height="11" rx="2.5" fill="none" stroke="white" stroke-opacity="0.5"/>
+        <rect x="2" y="2" width="19" height="8" rx="1.2" fill="white"/>
+        <rect x="23" y="4" width="2" height="4" rx="0.6" fill="white" fill-opacity="0.5"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="myjio">
+    <div class="logo">J</div>
+    <div class="badge">MyJio · onboarding</div>
+    <div class="title">Set up Jia<br/>in MyJio</div>
+    <div class="sub">In-app onboarding lives here — guided setup, profile, languages, contacts and consent — all inside MyJio.</div>
+
+    <div class="feature"><span class="dot"></span> Account already linked — single tap to start</div>
+    <div class="feature"><span class="dot"></span> Setup wizard with the same 4 steps as RCS</div>
+    <div class="feature"><span class="dot"></span> Capability tour with rich previews</div>
+    <div class="feature"><span class="dot"></span> Hand-off to call or chat at the end</div>
+
+    <div class="sub" style="margin-top: 24px; font-size: 12px; color: var(--ink-3);">
+      Designed in parallel by the MyJio app team. Will be linked here when ready.
+    </div>
+
+    <a href="index.html" class="back">← Back to onboarding</a>
+  </div>
+
+  <div class="home-indicator"></div>
+</div>
+
+<script>
+  // Auto-scale to fit viewport
+  function fitDevice() {
+    const dev = document.querySelector('.device');
+    const sw = (window.innerWidth - 24) / 390;
+    const sh = (window.innerHeight - 24) / 856;
+    const s = Math.min(1, sw, sh);
+    dev.style.transform = `scale(${s})`;
+  }
+  fitDevice(); window.addEventListener('resize', fitDevice);
+</script>
+</body>
+</html>

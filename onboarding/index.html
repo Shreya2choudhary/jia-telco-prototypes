@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Jia — Telco Prototypes</title>
+<title>Jia — Onboarding Prototypes</title>
 <style>
   @font-face { font-family: 'JioType'; font-weight: 500; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
   @font-face { font-family: 'JioType'; font-weight: 700; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
@@ -23,8 +23,12 @@
     font-weight: 900; font-size: 44px; letter-spacing: -0.04em;
     box-shadow: 0 6px 30px rgba(247,171,32,0.4);
   }
+  .eyebrow {
+    font-size: 11px; font-weight: 800; color: #F7AB20;
+    letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px;
+  }
   h1 { font-size: 44px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 10px; }
-  .sub { color: #A8A8A8; font-size: 17px; max-width: 540px; margin: 0 auto; }
+  .sub { color: #A8A8A8; font-size: 17px; max-width: 540px; margin: 0 auto; line-height: 1.5; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
   .card {
     background: #1C1C1E; border: 1px solid #2A2A2A; border-radius: 24px;
@@ -42,43 +46,49 @@
     margin-top: 18px; font-size: 14px; font-weight: 700; color: #F7AB20;
     display: flex; align-items: center; gap: 4px;
   }
+  .card.placeholder {
+    border-style: dashed; opacity: 0.85;
+  }
+  .card.placeholder .cta { color: #A8A8A8; }
   .footer {
     text-align: center; margin-top: 40px;
     color: #6E6E6E; font-size: 12px; line-height: 1.6;
   }
+  .footer a { color: #F7AB20; text-decoration: none; font-weight: 700; }
+  .footer a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="head">
     <div class="logo">J</div>
-    <div style="font-size: 11px; font-weight: 800; color: #F7AB20; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px;">Stage 2 — AI Companion</div>
-    <h1>Jia — AI Companion</h1>
-    <p class="sub">Three prototypes exploring how subscribers reach Jia via voice, RCS, or both. Already onboarded? <a href="onboarding/" style="color: #F7AB20; font-weight: 700; text-decoration: none;">→ Open Stage 1 (onboarding)</a></p>
+    <div class="eyebrow">Stage 1 — Onboarding</div>
+    <h1>Meet Jia for the first time</h1>
+    <p class="sub">Three channels for new users to discover and set up Jia. Each prototype shows the same outcome — Jia knows you and you know Jia — through a different surface.</p>
   </div>
   <div class="grid">
-    <a class="card" href="jia-voice.html">
-      <div class="num">01 · Voice only</div>
-      <h2>Dial #555</h2>
-      <p>iPhone-style audio call. Jia greets, Shreya speaks via the mic, conversation cycles through weather and cricket score. Audio-only — no captions.</p>
+    <a class="card" href="onboarding-call.html">
+      <div class="num">01 · Call</div>
+      <h2>Dial #5555</h2>
+      <p>iPhone-style audio call. Jia introduces herself and walks you through her four core capabilities, then asks how you'd like to continue — call, RCS, or MyJio.</p>
       <div class="cta">Open prototype →</div>
     </a>
-    <a class="card" href="jia-rcs.html">
-      <div class="num">02 · RCS only</div>
+    <a class="card" href="onboarding-rcs.html">
+      <div class="num">02 · RCS</div>
       <h2>iMessages</h2>
-      <p>Full RCS thread. Restaurants in Bandra, weather card, live cricket score, bill payment — full Jia conversation with rich cards and chips.</p>
+      <p>RCS thread that auto-plays Jia's intro, the capability carousel, consent, and a four-step setup wizard (name, nickname, tone, languages).</p>
       <div class="cta">Open prototype →</div>
     </a>
-    <a class="card" href="jia-voice-rcs.html">
-      <div class="num">03 · Voice + RCS</div>
-      <h2>The hybrid</h2>
-      <p>Call starts on iPhone, Shreya asks for restaurants, Jia says "I've sent options", call PiPs to the dynamic island and RCS slides up with the carousel.</p>
-      <div class="cta">Open prototype →</div>
+    <a class="card placeholder" href="onboarding-myjio.html">
+      <div class="num">03 · MyJio app</div>
+      <h2>In-app setup</h2>
+      <p>Onboarding inside the MyJio app — guided wizard, capability tour, profile and consent. Designed in parallel by the MyJio team. Placeholder for now.</p>
+      <div class="cta">View placeholder →</div>
     </a>
   </div>
   <div class="footer">
     Voice via Sarvam AI TTS (Anushka for Jia, Manisha for Shreya). All flows are scripted.<br/>
-    Need to onboard first? <a href="onboarding/" style="color: #F7AB20; text-decoration: none; font-weight: 700;">Stage 1 — Onboarding prototypes →</a>
+    Looking for the <a href="../">AI Companion prototypes</a>? They live one level up.
   </div>
 </div>
 </body>
