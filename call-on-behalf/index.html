@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Jia — Telco Prototypes</title>
+<title>Jia — Call on My Behalf</title>
 <style>
   @font-face { font-family: 'JioType'; font-weight: 500; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
   @font-face { font-family: 'JioType'; font-weight: 700; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
@@ -23,8 +23,12 @@
     font-weight: 900; font-size: 44px; letter-spacing: -0.04em;
     box-shadow: 0 6px 30px rgba(247,171,32,0.4);
   }
+  .eyebrow {
+    font-size: 11px; font-weight: 800; color: #F7AB20;
+    letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px;
+  }
   h1 { font-size: 44px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 10px; }
-  .sub { color: #A8A8A8; font-size: 17px; max-width: 540px; margin: 0 auto; }
+  .sub { color: #A8A8A8; font-size: 17px; max-width: 540px; margin: 0 auto; line-height: 1.5; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
   .card {
     background: #1C1C1E; border: 1px solid #2A2A2A; border-radius: 24px;
@@ -46,39 +50,41 @@
     text-align: center; margin-top: 40px;
     color: #6E6E6E; font-size: 12px; line-height: 1.6;
   }
+  .footer a { color: #F7AB20; text-decoration: none; font-weight: 700; }
+  .footer a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="head">
     <div class="logo">J</div>
-    <div style="font-size: 11px; font-weight: 800; color: #F7AB20; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px;">Stage 2 — AI Companion</div>
-    <h1>Jia — AI Companion</h1>
-    <p class="sub">Three prototypes exploring how subscribers reach Jia via voice, RCS, or both. Already onboarded? <a href="onboarding/" style="color: #F7AB20; font-weight: 700; text-decoration: none;">→ Open Stage 1 (onboarding)</a></p>
+    <div class="eyebrow">Stage 3 — Call on my behalf</div>
+    <h1>Let Jia make the call</h1>
+    <p class="sub">Three ways to delegate a real-world phone call to Jia — book a table, fix an appointment, sort a problem. You set the goal; Jia dials, navigates, and hands you the result.</p>
   </div>
   <div class="grid">
-    <a class="card" href="jia-voice.html">
-      <div class="num">01 · Voice only</div>
-      <h2>Dial #555</h2>
-      <p>iPhone-style audio call. Jia greets, Shreya speaks via the mic, conversation cycles through weather and cricket score. Audio-only — no captions.</p>
+    <a class="card" href="call-on-behalf.html">
+      <div class="num">01 · Call only</div>
+      <h2>Jia calls for you</h2>
+      <p>You're on the phone with Jia. She rings the restaurant on your behalf, books a table for four at Scarlett House, and pings you in Messages when it's confirmed.</p>
       <div class="cta">Open prototype →</div>
     </a>
-    <a class="card" href="jia-rcs.html">
-      <div class="num">02 · RCS only</div>
-      <h2>Messages</h2>
-      <p>Full RCS thread. Restaurants in Bandra, weather card, live cricket score, bill payment — full Jia conversation with rich cards and chips.</p>
+    <a class="card" href="call-on-behalf.html">
+      <div class="num">02 · Messages only</div>
+      <h2>Book via RCS chat</h2>
+      <p>Tap a chip in the Jia thread, browse the capability carousel, pick "Call on my behalf", type the booking details, and watch Jia handle it from Messages.</p>
       <div class="cta">Open prototype →</div>
     </a>
-    <a class="card" href="jia-voice-rcs.html">
-      <div class="num">03 · Voice + RCS</div>
+    <a class="card" href="call-on-behalf.html">
+      <div class="num">03 · Call + Messages</div>
       <h2>The hybrid</h2>
-      <p>Call starts on iPhone, Shreya asks for restaurants, Jia says "I've sent options", call PiPs to the dynamic island and RCS slides up with the carousel.</p>
+      <p>Ask Jia about Scarlett House on a call. She sends details to your Messages. Pick whether to confirm the booking on the call or from the chat — both flow to the same booking tracker.</p>
       <div class="cta">Open prototype →</div>
     </a>
   </div>
   <div class="footer">
-    Voice via Sarvam AI TTS (Anushka for Jia, Manisha for Shreya). All flows are scripted.<br/>
-    Other stages: <a href="onboarding/" style="color: #F7AB20; text-decoration: none; font-weight: 700;">Stage 1 — Onboarding</a> · <a href="call-on-behalf/" style="color: #F7AB20; text-decoration: none; font-weight: 700;">Stage 3 — Call on my behalf</a>
+    All three modes live inside one prototype — pick the matching tile inside once it opens.<br/>
+    Looking for <a href="../onboarding/">Stage 1 — Onboarding</a> or <a href="../">Stage 2 — AI Companion</a>?
   </div>
 </div>
 </body>
