@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jia — Call Intelligence Prototypes</title>
+<style>
+  @font-face { font-family: 'JioType'; font-weight: 500; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 700; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 900; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Black.woff2') format('woff2'); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'JioType', system-ui, sans-serif;
+    background: #0A0A0B; color: #F2F2F2; min-height: 100vh;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .wrap { max-width: 980px; width: 100%; }
+  .head { text-align: center; margin-bottom: 40px; }
+  .logo {
+    width: 88px; height: 88px; border-radius: 999px; margin: 0 auto 20px;
+    background: linear-gradient(145deg, #FFC86B, #F7AB20);
+    display: grid; place-items: center; color: #0E0E10;
+    font-weight: 900; font-size: 44px; letter-spacing: -0.04em;
+    box-shadow: 0 6px 30px rgba(247,171,32,0.4);
+  }
+  .eyebrow {
+    font-size: 11px; font-weight: 800; color: #F7AB20;
+    letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px;
+  }
+  h1 { font-size: 44px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 10px; }
+  .sub { color: #A8A8A8; font-size: 17px; max-width: 600px; margin: 0 auto; line-height: 1.5; }
+
+  .section-label {
+    font-size: 11px; font-weight: 800; color: #A8A8A8;
+    letter-spacing: 0.14em; text-transform: uppercase; margin: 24px 0 14px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-label::before, .section-label::after {
+    content: ''; flex: 1; height: 1px; background: #2A2A2A;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .card {
+    background: #1C1C1E; border: 1px solid #2A2A2A; border-radius: 24px;
+    padding: 28px 24px; text-decoration: none; color: inherit; display: flex; flex-direction: column;
+    transition: border-color 200ms, transform 150ms;
+  }
+  .card:hover { border-color: rgba(247,171,32,0.45); transform: translateY(-3px); }
+  .card .num {
+    font-size: 11px; font-weight: 800; color: #F7AB20; letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .card h2 { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 8px; line-height: 1.15; }
+  .card p { font-size: 14px; color: #A8A8A8; line-height: 1.5; flex: 1; }
+  .card .cta {
+    margin-top: 18px; font-size: 14px; font-weight: 700; color: #F7AB20;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .card.placeholder { border-style: dashed; opacity: 0.7; cursor: not-allowed; }
+  .card.placeholder:hover { border-color: #2A2A2A; transform: none; }
+  .card.placeholder .cta { color: #6E6E6E; }
+  .scenario {
+    background: rgba(247,171,32,0.06); border: 1px solid rgba(247,171,32,0.18);
+    border-radius: 16px; padding: 14px 18px; margin-bottom: 14px;
+    font-size: 14px; color: #D6D6D8; line-height: 1.55;
+  }
+  .scenario b { color: #F7AB20; font-weight: 700; }
+  .footer {
+    text-align: center; margin-top: 40px;
+    color: #6E6E6E; font-size: 12px; line-height: 1.6;
+  }
+  .footer a { color: #F7AB20; text-decoration: none; font-weight: 700; }
+  .footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="logo">J</div>
+    <div class="eyebrow">Stage 4 — Call Intelligence</div>
+    <h1>Jia answers the calls you can't</h1>
+    <p class="sub">When a call comes in and you don't pick up, Jia steps in on your behalf — takes the message, surfaces it as a live transcript, and lets you listen in, join, or decline at any time.</p>
+  </div>
+
+  <div class="section-label"><span>4A · Known caller — you don't answer in 5 rings</span></div>
+  <div class="scenario">
+    <b>Scenario:</b> Ananya (saved contact) calls. The phone rings 5 times — your default ring count, configurable. You don't pick up, so Jia auto-answers, asks why she's calling, takes the message about a birthday dinner, and pushes a summary card you can act on.
+  </div>
+  <div class="grid">
+    <a class="card" href="known-caller-rcs.html">
+      <div class="num">4A.1 · Call + RCS</div>
+      <h2>RCS notification</h2>
+      <p>Mid-call, Jia drops an RCS banner with a live transcript. Tap it to see Jia and Ananya's bubbles streaming in real time, with three chips: <b>Listen in</b>, <b>Join the call</b>, or <b>Decline</b>.</p>
+      <div class="cta">Open prototype →</div>
+    </a>
+    <a class="card" href="known-caller-myjio.html">
+      <div class="num">4A.2 · Call + MyJio</div>
+      <h2>MyJio in-call panel</h2>
+      <p>Same flow, surfaced inside the MyJio app instead of RCS. Live transcript with branded bubbles, the same three actions, and a MyJio-styled summary card at the end.</p>
+      <div class="cta">Open prototype →</div>
+    </a>
+  </div>
+
+  <div class="section-label"><span>4B · Unknown caller — defined later</span></div>
+  <div class="grid">
+    <div class="card placeholder">
+      <div class="num">4B.1 · Coming soon</div>
+      <h2>Unknown caller flow</h2>
+      <p>Untrusted number calls. Jia screens it before the phone even rings, decides if it's worth your attention, and either patches it through, takes a message, or blocks it.</p>
+      <div class="cta">To be defined →</div>
+    </div>
+    <div class="card placeholder">
+      <div class="num">4B.2 · Coming soon</div>
+      <h2>Unknown caller — surface TBD</h2>
+      <p>Same scenario, alternative surface (RCS, MyJio, or a new channel — pending design.)</p>
+      <div class="cta">To be defined →</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Voice via Sarvam AI TTS (Anushka for Jia, Vidya for Ananya). All flows are scripted.<br/>
+    Other stages: <a href="../onboarding/">Stage 1 — Onboarding</a> · <a href="../">Stage 2 — AI Companion</a> · <a href="../call-on-behalf/">Stage 3 — Call on my behalf</a>
+  </div>
+</div>
+</body>
+</html>
