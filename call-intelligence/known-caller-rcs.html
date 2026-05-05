@@ -532,7 +532,7 @@ function RcsHeader({ onBack, callActive }) {
         <div style={{ fontSize: 16, fontWeight: 700, color: INK, letterSpacing: '-0.01em', lineHeight: 1.2 }}>Jia</div>
         <div style={{ fontSize: 12, color: INK_2, display: 'flex', alignItems: 'center', gap: 5 }}>
           <span style={{ width: 7, height: 7, borderRadius: 999, background: '#4ED65A', display: 'inline-block' }}/>
-          {callActive ? 'On call · RCS' : 'Personal assistant · RCS'}
+          {callActive ? 'On call · Messages' : 'Personal assistant · Messages'}
         </div>
       </div>
       <button aria-label="Verify" style={{
@@ -1096,7 +1096,7 @@ function RcsScreen({ messages, typing, input, onInputChange, onSubmit, onChip, o
 }
 
 // ─────────────────────────────────────────────────────────────────
-// CONVERSATION SCRIPT — Stage 4A · Known caller
+// CONVERSATION SCRIPT — Use case 3A · Known caller
 // ─────────────────────────────────────────────────────────────────
 // Phone rings 5x; if user doesn't pick up, Jia auto-answers and
 // handles the call. Each 'turn' plays audio + adds a transcript bubble

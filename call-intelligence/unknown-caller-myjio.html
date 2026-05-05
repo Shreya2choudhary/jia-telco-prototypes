@@ -835,7 +835,7 @@ const ICON = {
   user: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>,
 };
 
-// ── Scenarios for RCS chip interaction (Stage 4B · unknown caller) ──
+// ── Scenarios for RCS chip interaction (Use case 3B · unknown caller) ──
 const SCENARIOS = [
   {
     match: /^listen in/i,
@@ -1155,7 +1155,7 @@ function RcsScreen({ messages, typing, input, onInputChange, onSubmit, onChip, o
 }
 
 // ─────────────────────────────────────────────────────────────────
-// CONVERSATION SCRIPT — Stage 4B · Unknown caller
+// CONVERSATION SCRIPT — Use case 3B · Unknown caller
 // ─────────────────────────────────────────────────────────────────
 // Unknown number calls. Jia intercepts BEFORE the phone rings. User
 // sees a notification at the top, taps it, watches the live transcript,
