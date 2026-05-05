@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jia — Daily Briefing · Messages</title>
+<style>
+  @font-face { font-family: 'JioType'; font-weight: 500; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 700; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 900; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Black.woff2') format('woff2'); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { font-family: 'JioType', system-ui, sans-serif; background: #0A0A0B; color: #F2F2F2;
+    display: flex; align-items: center; justify-content: center; }
+  .device {
+    width: 390px; height: 844px; background: #000; border-radius: 56px;
+    overflow: hidden; position: relative; transform-origin: top center;
+    border: 8px solid #0a0a0a; box-shadow: 0 30px 60px rgba(0,0,0,0.7);
+    display: flex; flex-direction: column;
+  }
+  .island { position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 124px; height: 36px; background: #000; border-radius: 999px; z-index: 30; }
+  .statusbar { display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 30px 6px; font-size: 14px; font-weight: 700; color: #fff; height: 50px; flex-shrink: 0; }
+  .thread-screen { flex: 1; display: flex; flex-direction: column; background: #1A1A1C; overflow: hidden; }
+  .thread-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; background: #1F1F22; border-bottom: 1px solid #2A2A2D;
+    flex-shrink: 0; position: sticky; top: 0; z-index: 10;
+  }
+  .jia-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(145deg, #FFC86B, #F7AB20);
+    color: #0E0E10; font-weight: 900; font-size: 18px;
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .thread-title { flex: 1; }
+  .thread-title .name { font-size: 16px; font-weight: 700; color: #fff; }
+  .thread-title .sub { font-size: 12px; color: #A8A8A8; display: flex; align-items: center; gap: 5px; margin-top: 1px; }
+  .live-dot { width: 7px; height: 7px; border-radius: 999px; background: #4ED65A; }
+  .thread-body { flex: 1; overflow-y: auto; padding: 16px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .thread-body::-webkit-scrollbar { width: 0; }
+  .time-divider { text-align: center; font-size: 11px; font-weight: 600; color: #6E6E6E;
+    padding: 8px 0; letter-spacing: 0.04em; text-transform: uppercase; }
+  .bubble-row { display: flex; gap: 6px; align-items: flex-end; max-width: 86%; animation: in 320ms cubic-bezier(0.4,0,0.2,1) both; }
+  .bubble-row.jia { align-self: flex-start; }
+  .bubble-row.user { align-self: flex-end; flex-direction: row-reverse; }
+  .bubble-avatar { width: 28px; flex-shrink: 0; }
+  .bubble {
+    padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.45;
+    letter-spacing: -0.005em; word-break: break-word;
+  }
+  .bubble.jia { background: #2A2A2C; color: #F2F2F2; border-radius: 18px 18px 18px 6px; }
+  .bubble.user { background: #5C2DD6; color: #fff; border-radius: 18px 18px 6px 18px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; padding: 4px 0 8px 34px;
+    animation: in 320ms cubic-bezier(0.4,0,0.2,1) both; }
+  .chip {
+    padding: 8px 14px; background: rgba(247,171,32,0.10); color: #F7AB20;
+    border: 1.5px solid rgba(247,171,32,0.4); border-radius: 999px;
+    font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .chip:hover { background: rgba(247,171,32,0.18); }
+  .chip:disabled { opacity: 0.4; cursor: default; }
+  .typing { padding: 8px 14px; background: #2A2A2C; border-radius: 18px 18px 18px 6px;
+    display: inline-flex; gap: 4px; align-items: center; }
+  .typing span { width: 6px; height: 6px; background: #888; border-radius: 50%;
+    animation: bounce 1.4s infinite both; }
+  .typing span:nth-child(2) { animation-delay: 0.15s; }
+  .typing span:nth-child(3) { animation-delay: 0.3s; }
+  .task-card {
+    margin: 6px 0 6px 34px; max-width: 90%;
+    background: rgba(247,171,32,0.06); border: 1.5px solid rgba(247,171,32,0.35); border-radius: 18px;
+    padding: 14px 16px; animation: in 320ms cubic-bezier(0.4,0,0.2,1) both;
+  }
+  .task-card .tag { font-size: 10px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #F7AB20; }
+  .task-card .title { font-size: 18px; font-weight: 800; color: #fff; margin-top: 4px; }
+  .task-card .meta { font-size: 13px; color: #A8A8A8; margin-top: 6px; line-height: 1.5; }
+  .task-card .meta b { color: #F2F2F2; font-weight: 700; }
+  .brief-card {
+    margin: 6px 0 6px 34px; max-width: 90%;
+    background: #232325; border: 1px solid #34343a; border-radius: 18px;
+    padding: 14px 16px; animation: in 320ms cubic-bezier(0.4,0,0.2,1) both;
+  }
+  .brief-card .head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .brief-card .icon { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+    background: rgba(247,171,32,0.12); color: #F7AB20; font-size: 18px; }
+  .brief-card .h-title { font-size: 14px; font-weight: 800; color: #fff; }
+  .brief-card ul { list-style: none; padding: 0; }
+  .brief-card li { font-size: 13px; color: #C8C8CC; line-height: 1.55; padding: 4px 0;
+    border-top: 1px solid rgba(255,255,255,0.05); }
+  .brief-card li:first-child { border-top: none; padding-top: 0; }
+
+  .composer { padding: 10px 12px; background: #1F1F22; border-top: 1px solid #2A2A2D; flex-shrink: 0; }
+  .composer-input {
+    width: 100%; padding: 10px 14px; border-radius: 999px;
+    background: #2A2A2C; border: none; color: #F2F2F2; font-size: 14px;
+    font-family: inherit; outline: none;
+  }
+  .composer-input::placeholder { color: #6E6E6E; }
+
+  .trigger-pill {
+    position: absolute; top: 60px; right: 12px; z-index: 60;
+    padding: 7px 12px 7px 10px; border-radius: 999px;
+    background: linear-gradient(145deg, #FFC86B, #F7AB20); color: #0E0E10;
+    border: none; font-size: 12px; font-weight: 800; cursor: pointer;
+    font-family: inherit; box-shadow: 0 6px 20px rgba(247,171,32,0.35);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .device-back-link {
+    position: absolute; top: 14px; right: 12px; z-index: 200;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 7px 12px 7px 10px; border-radius: 999px;
+    background: rgba(28,28,30,0.85); color: #F2F2F2;
+    border: 1px solid rgba(255,255,255,0.18); font-size: 12px; font-weight: 700;
+    text-decoration: none; backdrop-filter: blur(10px);
+  }
+  /* Animations */
+  @keyframes in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes bounce { 0%,60%,100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// Use case 5 · Daily Briefing — Messages surface
+// Setup: greeting → chips → "Brief me" → typed inputs → confirm → done card
+// Delivery (trigger): morning greeting + 3 cards (news / commute / horoscope) + bye
+
+const SETUP_FLOW = [
+  { t: 'time',  text: 'Today, 10:24' },
+  { t: 'jia',   text: "Hello Shreya 👋  I'm Jia. What can I help you with today?" },
+  { t: 'chips', chips: ['Brief me', 'Remind me', 'Book me an appointment', 'What can you do?'] },
+  { t: 'wait', ms: 700, label: '⌛ user picks "Brief me"' },
+  { t: 'user',  text: 'Brief me' },
+  { t: 'typing', ms: 700 },
+  { t: 'jia',   text: "Sure — what should I brief you on every morning?" },
+  { t: 'wait', ms: 1100, label: '⌛ user types' },
+  { t: 'user',  text: 'Top 3 news headlines, my commute to work, and my Virgo horoscope.' },
+  { t: 'typing', ms: 700 },
+  { t: 'jia',   text: "Got it — top headlines, your commute, and Virgo horoscope. What time should I send the briefing?" },
+  { t: 'wait', ms: 900 },
+  { t: 'user',  text: '8:30 AM, every day.' },
+  { t: 'typing', ms: 700 },
+  { t: 'jia',   text: "Perfect. Daily briefing at 8:30 AM, in Messages." },
+  { t: 'task',  task: { title: 'Daily briefing', time: '8:30 AM', cadence: 'Daily', items: 'Top headlines · Commute · Virgo horoscope' } },
+  { t: 'jia',   text: "You can pause, edit or delete this briefing any time — just tap the card above." },
+];
+
+const DELIVERY_FLOW = [
+  { t: 'time',  text: 'Tomorrow, 8:30 AM' },
+  { t: 'jia',   text: "Good morning, Shreya 🌅  Here's your briefing for today." },
+  { t: 'card',  card: 'news' },
+  { t: 'jia',   text: "Next, your commute." },
+  { t: 'card',  card: 'commute' },
+  { t: 'jia',   text: "And your Virgo horoscope." },
+  { t: 'card',  card: 'horoscope' },
+  { t: 'jia',   text: "That's it for today. Have a great morning! ✨" },
+];
+
+const BRIEFING_CARDS = {
+  news: {
+    icon: '📰', title: 'Top headlines · India & World',
+    bullets: [
+      'Assembly Elections — BJP sweeps Bengal & Assam, UDF wins Kerala, TVK stuns Tamil Nadu.',
+      'Iran — UAE intercepts missiles as US blockade strains Hormuz ceasefire.',
+      'IPL — Rohit & Rickelton power MI to a 6-wicket win over LSG at Wankhede.',
+    ],
+  },
+  commute: {
+    icon: '🚗', title: 'Time to work',
+    bullets: [
+      '23 minutes via Western Express Highway — light traffic right now.',
+      'Leave by 9:05 to make your 9:45 standup.',
+    ],
+  },
+  horoscope: {
+    icon: '♍', title: 'Virgo · Today',
+    bullets: [
+      'A productive day at work — but watch for misunderstandings in the afternoon.',
+      'Lucky colour: green · Lucky number: 7',
+    ],
+  },
+};
+
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+function App() {
+  // Auto-fit
+  useEffect(() => {
+    const fit = () => {
+      const dev = document.querySelector('.device'); if (!dev) return;
+      const sw = (window.innerWidth - 24) / 390;
+      const sh = (window.innerHeight - 24) / 844;
+      dev.style.transform = `scale(${Math.min(1, sw, sh)})`;
+    };
+    fit(); window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, []);
+
+  const [messages, setMessages] = useState([]);
+  const [typing, setTyping] = useState(false);
+  const [phase, setPhase] = useState('setup'); // 'setup' | 'scheduled' | 'delivering' | 'done'
+  const cancelRef = useRef(false);
+  const threadRef = useRef(null);
+
+  // Auto-scroll
+  useEffect(() => {
+    if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
+  }, [messages, typing]);
+
+  async function runFlow(flow, finalPhase) {
+    cancelRef.current = false;
+    for (const step of flow) {
+      if (cancelRef.current) return;
+      if (step.t === 'typing') {
+        setTyping(true); await wait(step.ms || 700); setTyping(false); continue;
+      }
+      if (step.t === 'wait') { await wait(step.ms || 600); continue; }
+      setMessages(m => [...m, { ...step, id: Date.now() + Math.random() }]);
+      await wait(step.t === 'card' ? 600 : 320);
+    }
+    setPhase(finalPhase);
+  }
+
+  useEffect(() => { runFlow(SETUP_FLOW, 'scheduled'); /* eslint-disable-next-line */ }, []);
+
+  function triggerDelivery() {
+    setPhase('delivering');
+    runFlow(DELIVERY_FLOW, 'done');
+  }
+
+  function statusTime() {
+    const d = new Date();
+    return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  return (
+    <div className="device">
+      <a href="index.html" className="device-back-link">← Back</a>
+      <div className="island"/>
+      <div className="statusbar">
+        <span>{statusTime()}</span>
+        <span style={{display:'flex',gap:5,alignItems:'center'}}>
+          <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><rect x="0" y="6" width="2.5" height="5" rx="0.6"/><rect x="3.5" y="3.5" width="2.5" height="7.5" rx="0.6"/><rect x="7" y="1" width="2.5" height="10" rx="0.6"/><rect x="10.5" y="-1" width="2.5" height="12" rx="0.6"/></svg>
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor"><path d="M7 1.5C4.4 1.5 2 2.6 0 4.7L7 10l7-5.3c-2-2.1-4.4-3.2-7-3.2z"/></svg>
+          <svg width="22" height="10" viewBox="0 0 22 10" fill="currentColor"><rect x="0" y="0" width="20" height="10" rx="2.5" fill="none" stroke="currentColor" strokeWidth="0.8"/><rect x="1.5" y="1.5" width="14" height="7" rx="1.5"/><rect x="20.5" y="3.5" width="1" height="3" rx="0.4"/></svg>
+        </span>
+      </div>
+
+      {phase === 'scheduled' && (
+        <button className="trigger-pill" onClick={triggerDelivery}>
+          Trigger 8:30 AM →
+        </button>
+      )}
+
+      <div className="thread-screen">
+        <div className="thread-header">
+          <div className="jia-avatar">J</div>
+          <div className="thread-title">
+            <div className="name">Jia</div>
+            <div className="sub"><span className="live-dot"/>Personal assistant · Messages</div>
+          </div>
+        </div>
+        <div className="thread-body" ref={threadRef}>
+          {messages.map(m => {
+            if (m.t === 'time') return <div key={m.id} className="time-divider">{m.text}</div>;
+            if (m.t === 'jia' || m.t === 'user') {
+              const isJia = m.t === 'jia';
+              return (
+                <div key={m.id} className={`bubble-row ${isJia ? 'jia' : 'user'}`}>
+                  <div className="bubble-avatar">
+                    {isJia && <div className="jia-avatar" style={{width: 28, height: 28, fontSize: 12}}>J</div>}
+                  </div>
+                  <div className={`bubble ${isJia ? 'jia' : 'user'}`}>{m.text}</div>
+                </div>
+              );
+            }
+            if (m.t === 'chips') {
+              return (
+                <div key={m.id} className="chips">
+                  {m.chips.map((c, i) => <button key={i} className="chip" disabled>{c}</button>)}
+                </div>
+              );
+            }
+            if (m.t === 'task') {
+              return (
+                <div key={m.id} className="task-card">
+                  <div className="tag">Briefing scheduled</div>
+                  <div className="title">{m.task.title}</div>
+                  <div className="meta"><b>{m.task.time}</b> · {m.task.cadence}</div>
+                  <div className="meta">{m.task.items}</div>
+                </div>
+              );
+            }
+            if (m.t === 'card') {
+              const c = BRIEFING_CARDS[m.card]; if (!c) return null;
+              return (
+                <div key={m.id} className="brief-card">
+                  <div className="head">
+                    <div className="icon">{c.icon}</div>
+                    <div className="h-title">{c.title}</div>
+                  </div>
+                  <ul>{c.bullets.map((b, i) => <li key={i}>{b}</li>)}</ul>
+                </div>
+              );
+            }
+            return null;
+          })}
+          {typing && (
+            <div className="bubble-row jia">
+              <div className="bubble-avatar"><div className="jia-avatar" style={{width: 28, height: 28, fontSize: 12}}>J</div></div>
+              <div className="typing"><span/><span/><span/></div>
+            </div>
+          )}
+        </div>
+        <div className="composer">
+          <input className="composer-input" placeholder="Type a message" disabled/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

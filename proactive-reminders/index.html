@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jia — Proactive Reminders Prototypes</title>
+<style>
+  @font-face { font-family: 'JioType'; font-weight: 500; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 700; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 900; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Black.woff2') format('woff2'); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'JioType', system-ui, sans-serif; background: #0A0A0B; color: #F2F2F2;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .wrap { max-width: 920px; width: 100%; }
+  .topnav { display: flex; margin-bottom: 24px; }
+  .topnav a { font-size: 13px; font-weight: 700; color: #A8A8A8; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 999px; border: 1px solid #2A2A2A;
+    transition: color 150ms, border-color 150ms; }
+  .topnav a:hover { color: #F7AB20; border-color: rgba(247,171,32,0.45); }
+  .head { text-align: center; margin-bottom: 40px; }
+  .logo { width: 88px; height: 88px; border-radius: 999px; margin: 0 auto 20px;
+    background: linear-gradient(145deg, #FFC86B, #F7AB20);
+    display: grid; place-items: center; color: #0E0E10;
+    font-weight: 900; font-size: 44px; letter-spacing: -0.04em;
+    box-shadow: 0 6px 30px rgba(247,171,32,0.4); }
+  .eyebrow { font-size: 11px; font-weight: 800; color: #F7AB20;
+    letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; }
+  h1 { font-size: 44px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 10px; }
+  .sub { color: #A8A8A8; font-size: 17px; max-width: 540px; margin: 0 auto; line-height: 1.5; }
+  .scenario { background: rgba(247,171,32,0.06); border: 1px solid rgba(247,171,32,0.18);
+    border-radius: 16px; padding: 14px 18px; margin: 24px 0;
+    font-size: 14px; color: #D6D6D8; line-height: 1.55; }
+  .scenario b { color: #F7AB20; font-weight: 700; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+  .card { background: #1C1C1E; border: 1px solid #2A2A2A; border-radius: 24px;
+    padding: 28px 24px; text-decoration: none; color: inherit; display: flex; flex-direction: column;
+    transition: border-color 200ms, transform 150ms; }
+  .card:hover { border-color: rgba(247,171,32,0.45); transform: translateY(-3px); }
+  .card .num { font-size: 11px; font-weight: 800; color: #F7AB20; letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 10px; }
+  .card h2 { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 8px; line-height: 1.15; }
+  .card p { font-size: 14px; color: #A8A8A8; line-height: 1.5; flex: 1; }
+  .card .cta { margin-top: 18px; font-size: 14px; font-weight: 700; color: #F7AB20;
+    display: flex; align-items: center; gap: 4px; }
+  .footer { text-align: center; margin-top: 40px; color: #6E6E6E; font-size: 12px; line-height: 1.6; }
+  .footer a { color: #F7AB20; text-decoration: none; font-weight: 700; }
+  .footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topnav"><a href="../">← All prototypes</a></div>
+  <div class="head">
+    <div class="logo">J</div>
+    <div class="eyebrow">Use case 6 — Proactive Reminders</div>
+    <h1>Jia nudges you, gently</h1>
+    <p class="sub">Set a reminder once — bills, medicines, follow-ups, anything — and Jia delivers it on the day, in the channel you picked. With your permission, on your schedule.</p>
+  </div>
+  <div class="scenario">
+    <b>Scenario:</b> Shreya asks Jia "remind me to take my BP meds at 9 AM, daily for 3 months." She picks her delivery channel (call or message). At 9 AM the next day, the reminder arrives — with snooze and acknowledge actions. Each prototype shows the setup conversation and a "Trigger 9 AM →" pill to fast-forward to delivery.
+  </div>
+  <div class="grid">
+    <a class="card" href="reminder-messages.html">
+      <div class="num">6.1 · Messages</div>
+      <h2>Setup + delivery in Messages</h2>
+      <p>Tap "Remind me", type the reminder, pick the Messages channel. At 9 AM, a rich reminder card lands in the thread with three chips: <b>✅ Taken</b>, <b>Snooze 5m</b>, or <b>Snooze 10m</b>.</p>
+      <div class="cta">Open prototype →</div>
+    </a>
+    <a class="card" href="reminder-call.html">
+      <div class="num">6.2 · Call</div>
+      <h2>Setup + delivery on a call</h2>
+      <p>Dial #5555, talk to Jia, tell her what to remind you about. At 9 AM, Jia calls and asks "have you taken them?" — you can confirm verbally or snooze.</p>
+      <div class="cta">Open prototype →</div>
+    </a>
+  </div>
+  <div class="footer">
+    Voice via Sarvam AI TTS (Anushka for Jia, Manisha for Shreya). All flows are scripted.<br/>
+    Other use cases: <a href="../onboarding/">1 — Onboarding</a> · <a href="../ai-companion/">2 — AI Companion</a> · <a href="../call-intelligence/">3 — Call intelligence</a> · <a href="../call-on-behalf/">4 — Call on my behalf</a> · <a href="../daily-briefing/">5 — Daily briefing</a>
+  </div>
+</div>
+</body>
+</html>
