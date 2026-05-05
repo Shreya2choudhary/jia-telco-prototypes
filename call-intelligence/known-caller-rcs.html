@@ -36,6 +36,8 @@
     0%, 100% { transform: scale(1); }
     50%      { transform: scale(1.02); }
   }
+  
+  @keyframes wave { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(0.4); } }
   @keyframes mic-glow {
     0%, 100% { box-shadow: 0 0 0 0 rgba(247,171,32,0.6); }
     50%      { box-shadow: 0 0 0 14px rgba(247,171,32,0); }
@@ -459,12 +461,12 @@ function ActionBtn({ icon, label, glow, active, onClick }) {
 // iPhone connected-call UI. No mute / keypad / speaker buttons because the
 // user isn't the participant. Three explicit actions: view transcript,
 // take over, end.
-function JiaHandlingScreen({ callTimer, callerName, callerSub, onViewTranscript, onTakeOver, onEnd }) {
+function JiaHandlingScreen({ callTimer, callerName, callerSub, onListenIn, onJoin, onDecline, onOpenPanel, panelLabel = 'Messages', listening = true }) {
   return (
     <div style={{
       flex: 1, display: 'flex', flexDirection: 'column',
       background: 'radial-gradient(ellipse at top, #14140f 0%, #050505 80%)',
-      color: '#fff', padding: '20px 24px 28px',
+      color: '#fff', padding: '20px 24px 24px',
     }}>
       <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', padding: '4px 0 4px' }}>
         <div style={{
@@ -475,14 +477,12 @@ function JiaHandlingScreen({ callTimer, callerName, callerSub, onViewTranscript,
           fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase',
           color: GOLD,
         }}>
-          <span style={{
-            width: 7, height: 7, borderRadius: 999, background: GOLD,
-            animation: 'mic-glow 1.4s ease-in-out infinite',
-          }}/>
+          <span style={{ width: 7, height: 7, borderRadius: 999, background: GOLD,
+            animation: 'mic-glow 1.4s ease-in-out infinite' }}/>
           Jia is handling
         </div>
       </div>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
         <div style={{
           width: 120, height: 120, borderRadius: '50%',
           background: 'radial-gradient(circle at 30% 30%, #FFC86B, #F7AB20 60%, #b06f00 100%)',
@@ -491,35 +491,59 @@ function JiaHandlingScreen({ callTimer, callerName, callerSub, onViewTranscript,
           color: '#0E0E10', fontWeight: 900, fontSize: 56, letterSpacing: '-0.04em',
           animation: 'mic-glow 1.6s ease-in-out infinite',
         }}>J</div>
-        <div style={{ marginTop: 4, fontSize: 32, fontWeight: 500, color: '#fff', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>{callTimer}</div>
-        <div style={{ textAlign: 'center', marginTop: 4 }}>
-          <div style={{ fontSize: 22, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em' }}>{callerName}</div>
-          {callerSub && <div style={{ marginTop: 4, fontSize: 14, color: 'rgba(255,255,255,0.55)' }}>{callerSub}</div>}
+        <div style={{ marginTop: 2, fontSize: 30, fontWeight: 500, color: '#fff', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>{callTimer}</div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 20, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em' }}>{callerName}</div>
+          {callerSub && <div style={{ marginTop: 3, fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>{callerSub}</div>}
+        </div>
+        {/* Always-pulsing Listening badge — confirms audio is being monitored */}
+        <div style={{
+          marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 6,
+          padding: '5px 11px', borderRadius: 999,
+          background: 'rgba(78,214,90,0.12)', border: '1px solid rgba(78,214,90,0.35)',
+          fontSize: 11, fontWeight: 700, color: '#4ED65A', letterSpacing: '0.04em',
+        }}>
+          <span style={{ display: 'inline-flex', gap: 2, alignItems: 'center' }}>
+            <span style={{ width: 2, height: 8, background: '#4ED65A', borderRadius: 1, animation: 'wave 1.0s 0.0s ease-in-out infinite' }}/>
+            <span style={{ width: 2, height: 12, background: '#4ED65A', borderRadius: 1, animation: 'wave 1.0s 0.15s ease-in-out infinite' }}/>
+            <span style={{ width: 2, height: 6, background: '#4ED65A', borderRadius: 1, animation: 'wave 1.0s 0.30s ease-in-out infinite' }}/>
+          </span>
+          {listening ? 'Listening' : 'Muted'}
         </div>
       </div>
-      <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 4 }}>
-        <button onClick={onViewTranscript} style={{
-          padding: '14px 20px', background: `linear-gradient(145deg, ${GOLD_SOFT}, ${GOLD})`,
-          color: '#0E0E10', fontWeight: 800, fontSize: 15, letterSpacing: '-0.005em',
-          border: 'none', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit',
-          boxShadow: '0 6px 20px rgba(247,171,32,0.35)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        }}>
-          View live transcript
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-        </button>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <button onClick={onTakeOver} style={{
-            padding: '12px 16px', background: 'rgba(255,255,255,0.06)',
-            color: '#fff', fontWeight: 600, fontSize: 14, letterSpacing: '-0.005em',
-            border: '1px solid rgba(255,255,255,0.14)', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit',
-          }}>Take over</button>
-          <button onClick={onEnd} style={{
-            padding: '12px 16px', background: 'rgba(255,59,48,0.12)',
-            color: '#FF6359', fontWeight: 600, fontSize: 14, letterSpacing: '-0.005em',
-            border: '1px solid rgba(255,59,48,0.3)', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit',
-          }}>End call</button>
+      <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 2 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+          <button onClick={onListenIn} style={{
+            padding: '11px 8px', background: 'rgba(247,171,32,0.14)',
+            color: GOLD, fontWeight: 800, fontSize: 13, letterSpacing: '-0.005em',
+            border: '1px solid rgba(247,171,32,0.45)', borderRadius: 999,
+            cursor: 'pointer', fontFamily: 'inherit',
+          }}>Listen in</button>
+          <button onClick={onJoin} style={{
+            padding: '11px 8px', background: 'rgba(78,214,106,0.14)',
+            color: '#4ED66A', fontWeight: 800, fontSize: 13, letterSpacing: '-0.005em',
+            border: '1px solid rgba(78,214,106,0.4)', borderRadius: 999,
+            cursor: 'pointer', fontFamily: 'inherit',
+          }}>Join</button>
+          <button onClick={onDecline} style={{
+            padding: '11px 8px', background: 'rgba(255,59,48,0.14)',
+            color: '#FF6359', fontWeight: 800, fontSize: 13, letterSpacing: '-0.005em',
+            border: '1px solid rgba(255,59,48,0.4)', borderRadius: 999,
+            cursor: 'pointer', fontFamily: 'inherit',
+          }}>Decline</button>
         </div>
+        {onOpenPanel && (
+          <button onClick={onOpenPanel} style={{
+            padding: '6px 10px', background: 'transparent',
+            color: 'rgba(255,255,255,0.55)', fontWeight: 700, fontSize: 11.5,
+            border: 'none', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+            letterSpacing: '0.02em',
+          }}>
+            Open {panelLabel}
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -867,7 +891,7 @@ const SCENARIOS = [
     ],
   },
   {
-    match: /^join the call|^join$/i,
+    match: /^join$/i,
     reply: () => [
       { kind: 'join-call' },
     ],
@@ -1186,7 +1210,7 @@ const INITIAL_RCS = [
   { id: 'r1', role: 'system', kind: 'system',
     text: "Jia auto-answered an incoming call from Ananya · just now" },
   { id: 'r2', role: 'system', kind: 'chips',
-    chips: ['Listen in', 'Join the call', 'Decline'] },
+    chips: ['Listen in', 'Join', 'Decline'] },
 ];
 
 // ─────────────────────────────────────────────────────────────────
@@ -1256,7 +1280,7 @@ function App() {
   // Show the RCS notification banner during the call.
   // Stays visible until user taps it or the call ends.
   const showRcsNotification = useCallback(() => {
-    setNotification({ title: 'Jia · Live transcript', body: 'Tap to listen in, join, or decline 👇' });
+    setNotification({ title: 'Jia · Active call', body: 'Open Messages to listen in, join, or decline 👇' });
   }, []);
 
   const advanceCallRef = useRef(null);
@@ -1277,28 +1301,17 @@ function App() {
       return;
     }
     if (type === 'turn') {
-      // ['turn', speaker, clip, transcript]
-      // Stream the transcript word-by-word in sync with the audio, like
-      // live captions. Bubble starts empty + a blinking caret; words fill
-      // in as the audio plays; final state shows full text.
-      const [, speaker, clip, transcript] = turn;
-      const bubbleId = genId();
-      const words = transcript.split(/\s+/).filter(Boolean);
-
-      setRcsMessages(prev => [...prev, {
-        id: bubbleId, role: speaker, kind: 'transcript',
-        text: '', streaming: true,
-      }]);
+      // RCS variant: play audio + drive orb, but do NOT push transcript bubbles.
+      // RCS doesn't support live captions in real life — the user only sees the
+      // 3-chip card and (later) a summary card.
+      const [, speaker, clip] = turn;
       setOrbState(speaker === 'jia' ? 'speaking' : 'listening');
-
-      // Resolve audio element + duration before deciding word cadence
       const audio = AUDIO_CACHE[clip] || new Audio(`audio/${clip}.wav`);
       if (currentAudio && currentAudio !== audio) {
         try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(_) {}
       }
       currentAudio = audio;
       audio.currentTime = 0;
-      // Wait for metadata if we don't have duration yet
       if (!audio.duration || isNaN(audio.duration)) {
         await new Promise(r => {
           if (audio.readyState >= 1) return r();
@@ -1307,35 +1320,13 @@ function App() {
           setTimeout(r, 250);
         });
       }
-      const dur = (audio.duration && !isNaN(audio.duration)) ? audio.duration * 1000 : words.length * 280;
-      const stepMs = Math.max(70, Math.min(360, dur / Math.max(1, words.length)));
-
-      // Start playback
+      const dur = (audio.duration && !isNaN(audio.duration)) ? audio.duration * 1000 : 4000;
       const p = audio.play(); if (p && p.catch) p.catch(() => {});
-
-      // Reveal words on a steady cadence
-      let revealed = 0;
-      const ticker = setInterval(() => {
-        revealed = Math.min(words.length, revealed + 1);
-        const partial = words.slice(0, revealed).join(' ');
-        setRcsMessages(prev => prev.map(m =>
-          m.id === bubbleId ? { ...m, text: partial } : m
-        ));
-        if (revealed >= words.length) clearInterval(ticker);
-      }, stepMs);
-
-      // Wait for audio to actually finish (or a generous fallback)
       await new Promise(resolve => {
         const done = () => { audio.onended = audio.onerror = null; resolve(); };
         audio.onended = done; audio.onerror = done;
         setTimeout(done, dur + 800);
       });
-      clearInterval(ticker);
-      // Final state: full text, no caret
-      setRcsMessages(prev => prev.map(m =>
-        m.id === bubbleId ? { ...m, text: transcript, streaming: false } : m
-      ));
-
       if (phaseRef.current === 'ended') return;
       setOrbState('idle');
       setScriptIdx(idx + 1);
@@ -1540,9 +1531,11 @@ function App() {
             callTimer={phase === 'connecting' ? 'connecting…' : callTime}
             callerName={ANANYA.name}
             callerSub={ANANYA.sub}
-            onViewTranscript={() => setPhase('pip')}
-            onTakeOver={() => { stopAudio(); setPhase('user-on-call'); callStartRef.current = Date.now(); }}
-            onEnd={endCall}/>
+            panelLabel="Messages"
+            onListenIn={() => { /* default state — audio is already on */ }}
+            onJoin={() => { stopAudio(); setPhase('user-on-call'); callStartRef.current = Date.now(); }}
+            onDecline={endCall}
+            onOpenPanel={() => setPhase('pip')}/>
         )}
         {phase === 'pip' && <RcsScreen
           messages={rcsMessages} typing={rcsTyping}
