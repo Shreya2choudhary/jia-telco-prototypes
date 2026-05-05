@@ -41,6 +41,10 @@
     50%      { box-shadow: 0 0 0 14px rgba(247,171,32,0); }
   }
   @keyframes blink { 50% { opacity: 0; } }
+  @keyframes stream-caret { 0%,100% { opacity: 0.85; } 50% { opacity: 0.15; } }
+  .stream-caret { display: inline-block; width: 2px; height: 0.95em;
+    margin-left: 3px; vertical-align: -2px; border-radius: 2px;
+    background: currentColor; animation: stream-caret 0.7s ease-in-out infinite; }
   @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
   @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes pulse-out-overlay {
@@ -1045,7 +1049,8 @@ function RcsScreen({ messages, typing, input, onInputChange, onSubmit, onChip, o
                     padding: '10px 14px',
                     fontSize: 14, lineHeight: 1.4, letterSpacing: '-0.005em',
                     whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                  }}>{m.text}</div>
+                    minHeight: m.streaming && !m.text ? 18 : undefined,
+                  }}>{m.text}{m.streaming && <span className="stream-caret"/>}</div>
                 </div>
               )}
               {m.kind === 'summary' && (
@@ -1202,14 +1207,64 @@ function App() {
     }
     if (type === 'turn') {
       // ['turn', speaker, clip, transcript]
+      // Stream the transcript word-by-word in sync with the audio, like
+      // live captions. Bubble starts empty + a blinking caret; words fill
+      // in as the audio plays; final state shows full text.
       const [, speaker, clip, transcript] = turn;
-      // Push transcript bubble first (it's "live")
+      const bubbleId = genId();
+      const words = transcript.split(/\s+/).filter(Boolean);
+
       setRcsMessages(prev => [...prev, {
-        id: genId(), role: speaker, kind: 'transcript', text: transcript,
+        id: bubbleId, role: speaker, kind: 'transcript',
+        text: '', streaming: true,
       }]);
-      // Orb visual cue: gold for Jia, purple-ish for Ananya
       setOrbState(speaker === 'jia' ? 'speaking' : 'listening');
-      await playClip(clip);
+
+      // Resolve audio element + duration before deciding word cadence
+      const audio = AUDIO_CACHE[clip] || new Audio(`audio/${clip}.wav`);
+      if (currentAudio && currentAudio !== audio) {
+        try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(_) {}
+      }
+      currentAudio = audio;
+      audio.currentTime = 0;
+      // Wait for metadata if we don't have duration yet
+      if (!audio.duration || isNaN(audio.duration)) {
+        await new Promise(r => {
+          if (audio.readyState >= 1) return r();
+          const onMd = () => { audio.removeEventListener('loadedmetadata', onMd); r(); };
+          audio.addEventListener('loadedmetadata', onMd);
+          setTimeout(r, 250);
+        });
+      }
+      const dur = (audio.duration && !isNaN(audio.duration)) ? audio.duration * 1000 : words.length * 280;
+      const stepMs = Math.max(70, Math.min(360, dur / Math.max(1, words.length)));
+
+      // Start playback
+      const p = audio.play(); if (p && p.catch) p.catch(() => {});
+
+      // Reveal words on a steady cadence
+      let revealed = 0;
+      const ticker = setInterval(() => {
+        revealed = Math.min(words.length, revealed + 1);
+        const partial = words.slice(0, revealed).join(' ');
+        setRcsMessages(prev => prev.map(m =>
+          m.id === bubbleId ? { ...m, text: partial } : m
+        ));
+        if (revealed >= words.length) clearInterval(ticker);
+      }, stepMs);
+
+      // Wait for audio to actually finish (or a generous fallback)
+      await new Promise(resolve => {
+        const done = () => { audio.onended = audio.onerror = null; resolve(); };
+        audio.onended = done; audio.onerror = done;
+        setTimeout(done, dur + 800);
+      });
+      clearInterval(ticker);
+      // Final state: full text, no caret
+      setRcsMessages(prev => prev.map(m =>
+        m.id === bubbleId ? { ...m, text: transcript, streaming: false } : m
+      ));
+
       if (phaseRef.current === 'ended') return;
       setOrbState('idle');
       setScriptIdx(idx + 1);
