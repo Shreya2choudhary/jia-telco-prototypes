@@ -169,6 +169,28 @@ document.addEventListener('DOMContentLoaded', async function() {
       };
       __tryNav(40);
     }
+    // Floating "← Back" link to the parent use-case landing.
+    // Injected after the bundle replaces the DOM so the link survives.
+    const __backLink = document.createElement('a');
+    __backLink.href = 'index.html';
+    __backLink.id = 'proto-back-link';
+    __backLink.textContent = '← Back';
+    __backLink.style.cssText = 'position:fixed;top:14px;left:14px;z-index:99999;'
+      + 'padding:8px 14px 8px 12px;border-radius:999px;'
+      + 'background:rgba(28,28,30,0.88);color:#A8A8A8;'
+      + 'border:1px solid #2A2A2A;font-size:12px;font-weight:700;'
+      + 'text-decoration:none;font-family:system-ui,sans-serif;letter-spacing:.02em;'
+      + 'display:inline-flex;align-items:center;gap:5px;'
+      + 'backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);'
+      + 'transition:color 150ms,border-color 150ms;';
+    __backLink.addEventListener('mouseover', () => {
+      __backLink.style.color = '#F7AB20'; __backLink.style.borderColor = 'rgba(247,171,32,0.5)';
+    });
+    __backLink.addEventListener('mouseout', () => {
+      __backLink.style.color = '#A8A8A8'; __backLink.style.borderColor = '#2A2A2A';
+    });
+    document.body.appendChild(__backLink);
+
   } catch (err) {
     setStatus('Error unpacking: ' + err.message);
     console.error('Bundle unpack error:', err);

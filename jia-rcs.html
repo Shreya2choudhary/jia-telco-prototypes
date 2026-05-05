@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Jia — RCS Assistant</title>
+<title>Jia — Messages</title>
 <style>
   @font-face { font-family: 'JioType'; font-weight: 300; font-style: normal; font-display: swap;
     src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeVarW05-Light.woff2') format('woff2'); }
@@ -36,6 +36,19 @@
 </style>
 </head>
 <body>
+<a href="ai-companion/" id="proto-back-link" aria-label="Back to use case landing"
+   style="position: fixed; top: 14px; left: 14px; z-index: 99999;
+          padding: 8px 14px 8px 12px; border-radius: 999px;
+          background: rgba(28,28,30,0.88); color: #A8A8A8;
+          border: 1px solid #2A2A2A; font-size: 12px; font-weight: 700;
+          text-decoration: none;
+          font-family: 'JioType', system-ui, sans-serif; letter-spacing: 0.02em;
+          display: inline-flex; align-items: center; gap: 5px;
+          backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+          transition: color 150ms, border-color 150ms, background 150ms;"
+   onmouseover="this.style.color='#F7AB20'; this.style.borderColor='rgba(247,171,32,0.5)';"
+   onmouseout="this.style.color='#A8A8A8'; this.style.borderColor='#2A2A2A';">← Back</a>
+
 <div id="root"></div>
 
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -619,7 +632,7 @@ function Composer({ value, onChange, onSubmit, disabled }) {
       }}>
         <input ref={ref}
           value={value} onChange={e => onChange(e.target.value)}
-          placeholder="RCS message" disabled={disabled}
+          placeholder="Type a message" disabled={disabled}
           style={{
             flex: 1, border: 'none', background: 'none', outline: 'none',
             fontSize: 15, color: INK, fontFamily: 'inherit',

@@ -30,13 +30,20 @@
   h1 { font-size: 44px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 10px; }
   .sub { color: #A8A8A8; font-size: 17px; max-width: 600px; margin: 0 auto; line-height: 1.5; }
 
-  .section-label {
-    font-size: 11px; font-weight: 800; color: #A8A8A8;
-    letter-spacing: 0.14em; text-transform: uppercase; margin: 24px 0 14px;
-    display: flex; align-items: center; gap: 12px;
+  .section-header { margin: 36px 0 18px; }
+  .section-header .tag {
+    display: inline-block; font-size: 11px; font-weight: 900; color: #F7AB20;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(247,171,32,0.08); border: 1px solid rgba(247,171,32,0.25);
   }
-  .section-label::before, .section-label::after {
-    content: ''; flex: 1; height: 1px; background: #2A2A2A;
+  .section-header h3 {
+    font-size: 28px; font-weight: 900; letter-spacing: -0.025em;
+    color: #F2F2F2; margin-top: 12px; line-height: 1.15;
+  }
+  .section-header h3 small {
+    display: block; font-size: 16px; font-weight: 600; color: #A8A8A8;
+    letter-spacing: -0.005em; margin-top: 4px;
   }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
   .card {
@@ -90,7 +97,10 @@
     <p class="sub">When a call comes in and you don't pick up, Jia steps in on your behalf — takes the message, surfaces it as a live transcript, and lets you listen in, join, or decline at any time.</p>
   </div>
 
-  <div class="section-label"><span>3A · Known caller — you don't answer in 5 rings</span></div>
+  <div class="section-header">
+    <span class="tag">3A</span>
+    <h3>Known caller<small>You don't answer in 5 rings — Jia auto-answers and takes the message.</small></h3>
+  </div>
   <div class="scenario">
     <b>Scenario:</b> Ananya (saved contact) calls. The phone rings 5 times — your default ring count, configurable. You don't pick up, so Jia auto-answers, asks why she's calling, takes the message about a birthday dinner, and pushes a summary card you can act on.
   </div>
@@ -109,7 +119,10 @@
     </a>
   </div>
 
-  <div class="section-label"><span>3B · Unknown caller — Jia screens before the phone rings</span></div>
+  <div class="section-header">
+    <span class="tag">3B</span>
+    <h3>Unknown caller<small>Phone never rings — Jia intercepts on the cloud and screens the call.</small></h3>
+  </div>
   <div class="scenario">
     <b>Scenario:</b> An unknown number calls — Rohit from HDFC Bank pitching a pre-approved credit card. Phone <b>never rings</b>; Jia intercepts at the network and answers directly. A notification slides down silently with a live transcript. The user reads two exchanges, recognises it as a sales call, taps <b>Decline</b>. Jia closes politely, summary card flags the number as spam.
   </div>
@@ -126,6 +139,22 @@
       <p>Same flow surfaced in the MyJio app — light theme transcript, MyJio header, branded summary card with "Block number" and "Report as spam" actions.</p>
       <div class="cta">Open prototype →</div>
     </a>
+  </div>
+
+  <div class="section-header">
+    <span class="tag">3C</span>
+    <h3>Add Jia to a call<small>Pull Jia onto an in-progress call via voice command or short code — coming soon.</small></h3>
+  </div>
+  <div class="scenario">
+    <b>Scenario:</b> You're already on a call (with a friend, a vendor, your bank). You say <b>"Hey Jia, join the call"</b> or dial a short code, and Jia comes on the line as a third participant. Once she's on, you can ask her anything mid-call — answer a question, look up a fact, book a table, place an order, call someone else on your behalf, or summarise everything that's been said.
+  </div>
+  <div class="grid">
+    <div class="card placeholder">
+      <div class="num">3C · Coming soon</div>
+      <h2>Add to call</h2>
+      <p>Three-way calling with Jia as the third leg, triggered by voice or short code. Once on the call, every other use case (Q&amp;A, bookings, call on your behalf) is available without hanging up.</p>
+      <div class="cta">In design →</div>
+    </div>
   </div>
 
   <div class="footer">
