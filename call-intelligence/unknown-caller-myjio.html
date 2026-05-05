@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jia — Call Intelligence · Unknown caller (MyJio)</title>
+<style>
+  @font-face { font-family: 'JioType'; font-weight: 500; font-style: normal; font-display: swap;
+    src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 700; font-style: normal; font-display: swap;
+    src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 900; font-style: normal; font-display: swap;
+    src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Black.woff2') format('woff2'); }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%; width: 100%;
+    font-family: 'JioType', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: #0A0A0B; color: #F2F2F2; overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  body { display: flex; align-items: center; justify-content: center; min-height: 100dvh; padding: 12px; }
+  div::-webkit-scrollbar { display: none; }
+
+  /* ── Animations ────────────────────────────────────────── */
+  @keyframes jia-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes jia-bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-4px); opacity: 1; }
+  }
+  @keyframes pulse-out {
+    0%   { transform: scale(1);    opacity: 0.7; }
+    100% { transform: scale(1.55); opacity: 0; }
+  }
+  @keyframes orb-idle {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.02); }
+  }
+  @keyframes mic-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(247,171,32,0.6); }
+    50%      { box-shadow: 0 0 0 14px rgba(247,171,32,0); }
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pulse-out-overlay {
+    0%   { transform: scale(1);    opacity: 0.7; }
+    100% { transform: scale(1.6);  opacity: 0; }
+  }
+
+  /* ── iOS frame ──────────────────────────────────────────── */
+  .device {
+    width: 390px; height: 844px;
+    border-radius: 54px;
+    background: #000;
+    border: 6px solid #1a1a1a;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06) inset;
+    overflow: hidden;
+    position: relative;
+    display: flex; flex-direction: column;
+    transform-origin: center center;
+  }
+
+  /* Dynamic island */
+  .island {
+    position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 122px; height: 36px; border-radius: 999px;
+    background: #000; z-index: 100;
+    transition: all 350ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .island.expanded {
+    width: 240px; height: 38px; background: #001a08; padding: 0 14px;
+  }
+  .island-pill {
+    display: none; align-items: center; gap: 8px;
+    color: #2dd66a; font-size: 13px; font-weight: 700; width: 100%; justify-content: space-between;
+  }
+  .island.expanded .island-pill { display: flex; }
+  .island-pill .left { display: flex; align-items: center; gap: 6px; }
+  .island-pill .left svg { width: 14px; height: 14px; }
+  .island-pill .timer { font-variant-numeric: tabular-nums; }
+
+  /* Status bar */
+  .status-bar {
+    height: 54px; flex-shrink: 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 16px 32px 0;
+    color: #fff; font-size: 17px; font-weight: 600;
+    z-index: 5; position: relative; pointer-events: none;
+  }
+  .status-bar.dark-bg { color: #fff; }
+  .status-bar .left { width: 64px; }
+  .status-bar .right { width: 64px; display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+
+  .home-indicator {
+    height: 30px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    background: transparent;
+  }
+  .home-indicator::before {
+    content: ''; width: 134px; height: 5px; border-radius: 999px; background: rgba(255,255,255,0.6);
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ── Tokens ─────────────────────────────────────────────────────────
+const GOLD        = '#F7AB20';
+const GOLD_SOFT   = '#FFC86B';
+const GOLD_TINT   = 'rgba(247,171,32,0.12)';
+const GOLD_BORDER = 'rgba(247,171,32,0.45)';
+const INK         = '#F2F2F2';
+const INK_2       = '#A8A8A8';
+const INK_3       = '#6E6E6E';
+const LINE        = '#2A2A2A';
+const BG          = '#1C1C1E';
+const BG_DEEP     = '#0E0E10';
+const USER_NAME   = 'Shreya';
+
+const genId = () => Math.random().toString(36).slice(2, 9);
+
+// ── Pre-generated Sarvam audio (Anushka = Jia, Abhilash = Rohit) ──
+const AUDIO_CACHE = {};
+const AUDIO_CLIPS = [
+  'ci2_jia_screen', 'ci2_rohit_intro', 'ci2_jia_probe', 'ci2_rohit_more', 'ci2_jia_decline',
+];
+function preloadAudio() {
+  AUDIO_CLIPS.forEach(name => {
+    const a = new Audio(`audio/${name}.wav`);
+    a.preload = 'auto';
+    AUDIO_CACHE[name] = a;
+  });
+}
+preloadAudio();
+let currentAudio = null;
+function playClip(name, { onPulse } = {}) {
+  return new Promise(resolve => {
+    const a = AUDIO_CACHE[name] || new Audio(`audio/${name}.wav`);
+    if (currentAudio && currentAudio !== a) { try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(_){} }
+    currentAudio = a;
+    a.currentTime = 0;
+    let pulseInt = null;
+    const cleanup = () => { if (pulseInt) clearInterval(pulseInt); a.onended = a.onerror = null; resolve(); };
+    a.onended = cleanup; a.onerror = cleanup;
+    const p = a.play();
+    if (p && p.catch) p.catch(cleanup);
+    if (onPulse) pulseInt = setInterval(onPulse, 320);
+  });
+}
+function stopAudio() {
+  if (currentAudio) { try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(_){} currentAudio = null; }
+}
+
+// ── Auto-scale ─────────────────────────────────────────────────────
+function useFitToViewport() {
+  useEffect(() => {
+    const fit = () => {
+      const dev = document.querySelector('.device');
+      if (!dev) return;
+      const sw = (window.innerWidth - 24) / 390;
+      const sh = (window.innerHeight - 24) / 856;
+      const s = Math.min(1, sw, sh);
+      dev.style.transform = `scale(${s})`;
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, []);
+}
+
+// ── iOS chrome ────────────────────────────────────────────────────
+function StatusBar({ time }) {
+  return (
+    <div className="status-bar">
+      <div className="left">{time}</div>
+      <div className="right">
+        <svg width="18" height="14" viewBox="0 0 18 14" fill="white">
+          <rect x="0" y="9" width="3" height="5" rx="1"/>
+          <rect x="5" y="6" width="3" height="8" rx="1"/>
+          <rect x="10" y="3" width="3" height="11" rx="1"/>
+          <rect x="15" y="0" width="3" height="14" rx="1" opacity="0.4"/>
+        </svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="white">
+          <path d="M8 11.5l1.5-1.5a2.12 2.12 0 0 0-3 0L8 11.5z"/>
+          <path d="M8 8a4.5 4.5 0 0 0-3.18 1.32l1.06 1.06A3 3 0 0 1 8 9.5a3 3 0 0 1 2.12.88l1.06-1.06A4.5 4.5 0 0 0 8 8z"/>
+          <path d="M8 4.5A8 8 0 0 0 2.34 6.84l1.06 1.06A6.5 6.5 0 0 1 8 6a6.5 6.5 0 0 1 4.6 1.9l1.06-1.06A8 8 0 0 0 8 4.5z"/>
+          <path d="M8 1a11.5 11.5 0 0 0-8.13 3.37l1.07 1.07A10 10 0 0 1 8 2.5a10 10 0 0 1 7.06 2.94l1.07-1.07A11.5 11.5 0 0 0 8 1z"/>
+        </svg>
+        <svg width="26" height="12" viewBox="0 0 26 12">
+          <rect x="0.5" y="0.5" width="22" height="11" rx="2.5" fill="none" stroke="white" strokeOpacity="0.5"/>
+          <rect x="2" y="2" width="19" height="8" rx="1.2" fill="white"/>
+          <rect x="23" y="4" width="2" height="4" rx="0.6" fill="white" fillOpacity="0.5"/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function DynamicIsland({ expanded, dropped, timer, onClick }) {
+  // When dropped: show a brief "Call ended" state in red, then collapse
+  return (
+    <div className={'island' + (expanded ? ' expanded' : '')} onClick={onClick}
+      style={dropped ? { background: '#3a1417' } : {}}>
+      <div className="island-pill" style={dropped ? { color: '#ff8a90' } : {}}>
+        <span className="left">
+          <svg viewBox="0 0 24 24" fill={dropped ? '#ff8a90' : '#2dd66a'}>
+            {dropped
+              ? <path d="M21 15.46l-5.27-.61a1.25 1.25 0 0 0-1.06.36l-2.16 2.17a16 16 0 0 1-7.06-7.07l2.18-2.16a1.25 1.25 0 0 0 .36-1.06L7.39 1.83A1.25 1.25 0 0 0 6.16 1H3a2 2 0 0 0-2 2 22 22 0 0 0 22 22 2 2 0 0 0 2-2v-3.16a1.25 1.25 0 0 0-1-1.38z" transform="rotate(135 12 12)"/>
+              : <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            }
+          </svg>
+          {dropped ? 'Call ended' : 'Jia'}
+        </span>
+        {!dropped && <span className="timer">{timer}</span>}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// LOCK SCREEN — phone is idle, Jia silently intercepts the call (no ring).
+// User sees a notification slide down from the top.
+// ─────────────────────────────────────────────────────────────────
+const ANANYA = { name: 'Rohit · Unknown', sub: '+91 98… · No saved contact', initial: '?', accent: '#1F4FD0' };
+const CALLER = { name: 'Rohit', label: 'Unknown caller', phone: '+91 98765 43210', initial: 'R', accent: '#1F4FD0' };
+
+function LockScreen({ statusTime }) {
+  const now = new Date();
+  const day = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][now.getDay()];
+  const date = now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  return (
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column',
+      background: 'radial-gradient(ellipse at top, #14141A 0%, #050505 80%)',
+      color: '#fff', position: 'relative',
+    }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.65)', letterSpacing: '0.04em' }}>{date}</div>
+        <div style={{ fontSize: 88, fontWeight: 200, color: '#fff', lineHeight: 1, marginTop: 6, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums' }}>{statusTime}</div>
+        <div style={{ marginTop: 30, opacity: 0.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="16" height="22" viewBox="0 0 16 22" fill="none" stroke="#fff" strokeWidth="1.5">
+            <rect x="2" y="9" width="12" height="11" rx="2"/>
+            <path d="M5 9V6a3 3 0 0 1 6 0v3"/>
+          </svg>
+        </div>
+      </div>
+      <div style={{ flexShrink: 0, textAlign: 'center', padding: '16px 0 26px', color: 'rgba(255,255,255,0.5)', fontSize: 12, letterSpacing: '0.02em' }}>
+        Swipe up to unlock
+      </div>
+    </div>
+  );
+}
+
+function IncomingCallScreen({ onAccept, onDecline, ringCount, totalRings = 5 }) {
+  return (
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column',
+      background: 'radial-gradient(ellipse at top, #1a1422 0%, #050505 80%)',
+      color: '#fff', paddingTop: 8, position: 'relative',
+    }}>
+      <div style={{ padding: '18px 32px 0', textAlign: 'center', flexShrink: 0 }}>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Mobile · Saved contact</div>
+        <div style={{ marginTop: 4, fontSize: 13, color: '#A8A8A8', fontWeight: 500 }}>
+          Auto-answer in {Math.max(0, totalRings - ringCount)} rings
+        </div>
+      </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: 20 }}>
+        <div style={{ position: 'relative', width: 200, height: 200, display: 'grid', placeItems: 'center' }}>
+          {[0,1,2].map(i => (
+            <span key={i} style={{
+              position: 'absolute', inset: 0, borderRadius: '50%',
+              border: `2px solid rgba(124,58,237,0.55)`,
+              animation: `pulse-out 1.6s ${i*0.5}s ease-out infinite`,
+              opacity: 0,
+            }}/>
+          ))}
+          <div style={{
+            width: 128, height: 128, borderRadius: '50%',
+            background: `linear-gradient(145deg, #b08bff, ${ANANYA.accent} 70%)`,
+            display: 'grid', placeItems: 'center',
+            color: '#fff', fontWeight: 900, fontSize: 60, letterSpacing: '-0.04em',
+            boxShadow: '0 0 60px rgba(124,58,237,0.5)',
+          }}>{ANANYA.initial}</div>
+        </div>
+        <div style={{ marginTop: 28, fontSize: 32, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em' }}>{ANANYA.name}</div>
+        <div style={{ marginTop: 6, fontSize: 16, color: 'rgba(255,255,255,0.65)' }}>{ANANYA.sub}</div>
+        <div style={{ marginTop: 4, fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>incoming call · ring {ringCount + 1}/{totalRings}</div>
+      </div>
+      <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'space-around', padding: '0 36px 28px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <button onClick={onDecline} style={{
+            width: 70, height: 70, borderRadius: '50%', background: '#FF3B30', border: 'none',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 6px 20px rgba(255,59,48,0.4)',
+          }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+              <path d="M21 15.46l-5.27-.61a1.25 1.25 0 0 0-1.06.36l-2.16 2.17a16 16 0 0 1-7.06-7.07l2.18-2.16a1.25 1.25 0 0 0 .36-1.06L7.39 1.83A1.25 1.25 0 0 0 6.16 1H3a2 2 0 0 0-2 2 22 22 0 0 0 22 22 2 2 0 0 0 2-2v-3.16a1.25 1.25 0 0 0-1-1.38z" transform="rotate(135 12 12)"/>
+            </svg>
+          </button>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>decline</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <button onClick={onAccept} style={{
+            width: 70, height: 70, borderRadius: '50%', background: '#2DD66A', border: 'none',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 6px 20px rgba(45,214,106,0.4)',
+            animation: 'mic-glow 1.6s ease-in-out infinite',
+          }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+          </button>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>answer</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// LEGACY DialerScreen — unused, kept to avoid breaking refs in snapshot tools
+function DialerScreen({ onCall }) {
+  const [dialed, setDialed] = useState('');
+  const [pressed, setPressed] = useState(null);
+  const KEYS = [
+    ['1', ''],     ['2', 'A B C'], ['3', 'D E F'],
+    ['4', 'G H I'],['5', 'J K L'], ['6', 'M N O'],
+    ['7', 'P Q R S'],['8', 'T U V'],['9', 'W X Y Z'],
+    ['*', ''], ['0', '+'], ['#', ''],
+  ];
+  const press = (d) => {
+    setDialed(prev => prev.length >= 12 ? prev : prev + d);
+    setPressed(d);
+    setTimeout(() => setPressed(p => p === d ? null : p), 140);
+  };
+
+  // Auto-type #555
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      await new Promise(r => setTimeout(r, 700));
+      const seq = '#5555';
+      for (const c of seq) {
+        if (cancel) return;
+        press(c);
+        await new Promise(r => setTimeout(r, 240));
+      }
+    })();
+    return () => { cancel = true; };
+  }, []);
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#000', paddingBottom: 16 }}>
+      <div style={{ flex: '0 0 auto', padding: '12px 24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 110 }}>
+        <div style={{ fontSize: 44, fontWeight: 400, color: '#fff', minHeight: 56, fontVariantNumeric: 'tabular-nums' }}>{dialed}</div>
+      </div>
+      <div style={{
+        flex: 1, display: 'grid',
+        gridTemplateColumns: 'repeat(3, 76px)', gridAutoRows: '76px',
+        gap: '14px 30px', justifyContent: 'center', alignContent: 'center',
+        padding: '0 24px',
+      }}>
+        {KEYS.map(([d, l]) => (
+          <button key={d}
+            onClick={() => press(d)}
+            style={{
+              width: 76, height: 76,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              borderRadius: '50%',
+              background: pressed === d ? 'rgba(255,255,255,0.36)' : 'rgba(255,255,255,0.18)',
+              color: '#fff',
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0,
+              transition: 'background 100ms',
+            }}>
+            <span style={{ fontSize: d === '*' || d === '#' ? 32 : 30, fontWeight: 400, lineHeight: 1 }}>{d}</span>
+            <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.18em', marginTop: 3, color: '#fff', visibility: (d === '*' || d === '#') ? 'hidden' : 'visible' }}>{l || '\u00a0'}</span>
+          </button>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '4px 30px 0' }}>
+        <span/>
+        <button onClick={() => { if (dialed) onCall(); }}
+          style={{
+            width: 70, height: 70, borderRadius: '50%', background: '#2DD66A', border: 'none',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 6px 20px rgba(45,214,106,0.4)',
+            gridColumn: 2,
+          }}>
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="white">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+        </button>
+        <button onClick={() => setDialed(d => d.slice(0, -1))} disabled={!dialed}
+          style={{
+            gridColumn: 3, justifySelf: 'end',
+            width: 36, height: 36, border: 'none', background: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff', opacity: dialed ? 0.6 : 0,
+          }}>
+          <svg viewBox="0 0 28 22" width="28" height="22" fill="white">
+            <path d="M9 0H26a2 2 0 0 1 2 2v18a2 2 0 0 1-2 2H9L0 11 9 0z" opacity="0.4"/>
+            <path d="M13 7l8 8M21 7l-8 8" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// CALL SCREEN (audio-only)
+// ─────────────────────────────────────────────────────────────────
+function Orb({ state }) {
+  // state: 'idle' | 'speaking' | 'listening'
+  const ringStyle = {
+    position: 'absolute', inset: 0, borderRadius: '50%',
+    background: state === 'listening'
+      ? 'radial-gradient(circle at 30% 30%, #aee0ff, #4FC1FF 60%, #1a78b8 100%)'
+      : 'radial-gradient(circle at 30% 30%, #FFC86B, #F7AB20 60%, #b06f00 100%)',
+    boxShadow: state === 'listening'
+      ? '0 0 80px rgba(79,193,255,0.55), 0 0 160px rgba(79,193,255,0.3), inset 0 6px 30px rgba(220,240,255,0.6), inset 0 -6px 30px rgba(20,80,140,0.3)'
+      : '0 0 80px rgba(247,171,32,0.55), 0 0 160px rgba(247,171,32,0.3), inset 0 6px 30px rgba(255,220,150,0.6), inset 0 -6px 30px rgba(140,80,0,0.3)',
+    animation: 'orb-idle 4s ease-in-out infinite',
+  };
+  const pulseStyle = {
+    position: 'absolute', inset: 0, borderRadius: '50%',
+    border: `2px solid ${state === 'listening' ? 'rgba(79,193,255,0.6)' : 'rgba(247,171,32,0.6)'}`,
+    opacity: 0, pointerEvents: 'none',
+  };
+  return (
+    <div style={{ position: 'relative', width: 220, height: 220, display: 'grid', placeItems: 'center' }}>
+      {state === 'speaking' && [0,1,2].map(i => (
+        <span key={i} style={{ ...pulseStyle, animation: `pulse-out 1.4s ${i*0.45}s ease-out infinite` }}/>
+      ))}
+      {state === 'listening' && [0,1,2].map(i => (
+        <span key={i} style={{ ...pulseStyle, animation: `pulse-out 1.2s ${i*0.4}s ease-out infinite` }}/>
+      ))}
+      <div style={ringStyle}/>
+      <div style={{
+        position: 'relative', zIndex: 2,
+        fontFamily: 'JioType, system-ui', fontWeight: 900,
+        fontSize: state === 'listening' ? 72 : 96, color: '#0E0E10',
+        letterSpacing: '-0.04em', textShadow: '0 2px 10px rgba(0,0,0,0.18)',
+        userSelect: 'none',
+      }}>{state === 'listening' ? 'S' : 'J'}</div>
+    </div>
+  );
+}
+
+function ActionBtn({ icon, label, glow, active, onClick }) {
+  return (
+    <button onClick={onClick} style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+      background: 'none', border: 'none', cursor: 'pointer', color: '#fff',
+      fontFamily: 'inherit', padding: 4,
+    }}>
+      <span style={{
+        width: 64, height: 64, borderRadius: '50%',
+        background: glow ? 'rgba(247,171,32,0.95)' : active ? '#fff' : 'rgba(255,255,255,0.18)',
+        display: 'grid', placeItems: 'center',
+        animation: glow ? 'mic-glow 1.4s ease-in-out infinite' : 'none',
+        transition: 'background 150ms',
+      }}>
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none"
+          stroke={glow ? '#0E0E10' : active ? '#000' : '#fff'} strokeWidth="1.7"
+          strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
+      </span>
+      <span style={{ fontSize: 11, color: glow ? GOLD : '#fff', opacity: 0.95, fontWeight: glow ? 700 : 500 }}>{label}</span>
+    </button>
+  );
+}
+
+function CallScreen({ orbState, micGlow, callTimer, onMicTap, onEnd }) {
+  return (
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column',
+      background: 'radial-gradient(ellipse at top, #0a0a0c 0%, #050505 80%)',
+      color: '#fff', paddingTop: 8,
+    }}>
+      <div style={{ padding: '12px 32px 0', textAlign: 'center', flexShrink: 0 }}>
+        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', color: GOLD, textTransform: 'uppercase' }}>Jia is screening</div>
+        <div style={{ marginTop: 4, fontSize: 22, fontWeight: 500, letterSpacing: '-0.01em', color: '#fff' }}>Unknown · +91 98765 43210</div>
+        <div style={{ marginTop: 6, fontSize: 16, color: 'rgba(255,255,255,0.65)', fontWeight: 400, fontVariantNumeric: 'tabular-nums', minHeight: 20 }}>{callTimer}</div>
+      </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: 20 }}>
+        <Orb state={orbState}/>
+      </div>
+      <div style={{
+        flexShrink: 0, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: '12px 36px', padding: '12px 32px 8px',
+      }}>
+        <ActionBtn icon={<><path d="M9 2h6v10a3 3 0 0 1-6 0V2zM4 11a8 8 0 0 0 16 0M12 19v3"/></>} label="mute"/>
+        <ActionBtn icon={<>{[6,12,18].flatMap(y => [6,12,18].map(x => <circle key={x+'-'+y} cx={x} cy={y} r="1.5" fill="#fff" stroke="none"/>))}</>} label="keypad"/>
+        <ActionBtn active icon={<><path d="M3 10v4a3 3 0 0 0 3 3h2l5 4V3L8 7H6a3 3 0 0 0-3 3z"/><path d="M16 8a5 5 0 0 1 0 8M19 5a9 9 0 0 1 0 14"/></>} label="audio"/>
+        <ActionBtn icon={<><circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0M18 7v6M15 10h6"/></>} label="add"/>
+        <ActionBtn icon={<><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 8l-6 4 6 4V8z"/></>} label="FaceTime"/>
+        <ActionBtn glow={micGlow} onClick={onMicTap}
+          icon={<><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></>}
+          label="speak"/>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '0 32px 12px', flexShrink: 0 }}>
+        <button onClick={onEnd} style={{
+          width: 70, height: 70, borderRadius: '50%', background: '#FF3B30', border: 'none',
+          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 6px 20px rgba(255,59,48,0.4)',
+        }}>
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="white">
+            <path d="M21 15.46l-5.27-.61a1.25 1.25 0 0 0-1.06.36l-2.16 2.17a16 16 0 0 1-7.06-7.07l2.18-2.16a1.25 1.25 0 0 0 .36-1.06L7.39 1.83A1.25 1.25 0 0 0 6.16 1H3a2 2 0 0 0-2 2 22 22 0 0 0 22 22 2 2 0 0 0 2-2v-3.16a1.25 1.25 0 0 0-1-1.38z" transform="rotate(135 12 12)"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// RCS COMPONENTS (lifted from jia-rcs.html — restaurants flow)
+// ─────────────────────────────────────────────────────────────────
+function JiaAvatar({ size = 28 }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: 999, flexShrink: 0,
+      background: `linear-gradient(145deg, ${GOLD_SOFT}, ${GOLD})`,
+      display: 'grid', placeItems: 'center', color: '#0E0E10',
+      fontFamily: 'JioType, system-ui', fontWeight: 900,
+      fontSize: size * 0.48, letterSpacing: '-0.02em',
+      boxShadow: '0 2px 6px rgba(247,171,32,0.35)',
+    }}>J</div>
+  );
+}
+
+function MyJioLogo({ size = 36 }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: 10, flexShrink: 0,
+      background: 'linear-gradient(135deg, #1F4FD0 0%, #0B2C7A 100%)',
+      display: 'grid', placeItems: 'center',
+      boxShadow: '0 2px 6px rgba(31,79,208,0.35)',
+      position: 'relative', overflow: 'hidden',
+    }}>
+      <span style={{
+        color: '#fff', fontFamily: 'JioType, system-ui',
+        fontWeight: 900, fontSize: size * 0.46, letterSpacing: '-0.04em', lineHeight: 1,
+      }}>My</span>
+      <span style={{
+        position: 'absolute', right: -2, bottom: -2,
+        width: size * 0.42, height: size * 0.42,
+        background: '#E6262A', borderRadius: 999,
+      }}/>
+    </div>
+  );
+}
+
+function RcsHeader({ onBack, callActive }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '10px 10px 10px 6px', background: '#fff',
+      borderBottom: '1px solid #E6E6E9',
+      position: 'sticky', top: 0, zIndex: 5, flexShrink: 0,
+      color: '#0E0E10',
+    }}>
+      <button onClick={onBack} aria-label="Back" style={{
+        width: 40, height: 40, borderRadius: 999, border: 'none',
+        background: 'none', display: 'grid', placeItems: 'center', cursor: 'pointer',
+      }}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <MyJioLogo size={36}/>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: '#0E0E10', letterSpacing: '-0.01em', lineHeight: 1.2 }}>MyJio</div>
+        <div style={{ fontSize: 12, color: '#5C5C66', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{
+            width: 7, height: 7, borderRadius: 999, background: '#E6262A', display: 'inline-block',
+            animation: 'mic-glow 1.4s ease-in-out infinite',
+          }}/>
+          {callActive ? 'Live · Jia is screening this call' : 'Recent calls · Jia'}
+        </div>
+      </div>
+      <button aria-label="More" style={{
+        width: 40, height: 40, borderRadius: 999, border: 'none',
+        background: 'none', display: 'grid', placeItems: 'center', cursor: 'pointer',
+      }}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#0E0E10"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+      </button>
+    </div>
+  );
+}
+
+function AssistantBubble({ text, showAvatar, corner }) {
+  const radius = ({ full: '18px', top: '18px 18px 18px 6px', mid: '6px 18px 18px 6px', bot: '6px 18px 18px 18px' })[corner] || '18px';
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, maxWidth: '82%' }}>
+      <div style={{ width: 28, flexShrink: 0 }}>{showAvatar && <JiaAvatar size={28}/>}</div>
+      <div style={{
+        background: '#2A2A2C', color: INK, borderRadius: radius, padding: '10px 14px',
+        fontSize: 15, lineHeight: 1.4, letterSpacing: '-0.005em',
+        whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+      }}>{text}</div>
+    </div>
+  );
+}
+
+function UserBubble({ text, corner }) {
+  const radius = ({ full: '18px', top: '18px 18px 6px 18px', mid: '18px 6px 6px 18px', bot: '18px 6px 18px 18px' })[corner] || '18px';
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-end', maxWidth: '82%', marginLeft: 'auto' }}>
+      <div style={{
+        background: `linear-gradient(145deg, ${GOLD_SOFT}, ${GOLD})`, color: '#0E0E10',
+        borderRadius: radius, padding: '10px 14px',
+        fontSize: 15, fontWeight: 600, lineHeight: 1.4, letterSpacing: '-0.005em',
+        whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+        boxShadow: '0 2px 8px rgba(247,171,32,0.25)',
+      }}>{text}</div>
+    </div>
+  );
+}
+
+function TypingIndicator() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
+      <JiaAvatar size={28}/>
+      <div style={{
+        background: '#2A2A2C', borderRadius: '18px 18px 18px 6px', padding: '12px 16px',
+        display: 'flex', gap: 4,
+      }}>
+        {[0,1,2].map(i => (
+          <span key={i} style={{
+            width: 7, height: 7, borderRadius: 999, background: '#A8A8A8',
+            animation: `jia-bounce 1.2s ${i*0.15}s ease-in-out infinite`,
+          }}/>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Chips({ chips, onTap }) {
+  if (!chips || chips.length === 0) return null;
+  return (
+    <div style={{
+      display: 'flex', gap: 8, flexWrap: 'wrap',
+      paddingLeft: 34, paddingRight: 8, marginTop: 4,
+    }}>
+      {chips.map((c, i) => (
+        <button key={i} onClick={() => onTap(c)} style={{
+          padding: '7px 14px', background: 'transparent',
+          border: `1.5px solid ${GOLD_BORDER}`, color: GOLD,
+          borderRadius: 999, fontSize: 13, fontWeight: 700,
+          cursor: 'pointer', fontFamily: 'inherit',
+          letterSpacing: '-0.005em',
+        }}>{c}</button>
+      ))}
+    </div>
+  );
+}
+
+function RestaurantCard({ name, cuisine, rating, distance, price, hero, accent, onCall, onDirections }) {
+  return (
+    <div style={{
+      flexShrink: 0, width: 224, background: BG, border: `1px solid ${LINE}`,
+      borderRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column',
+    }}>
+      <div style={{
+        height: 110, position: 'relative',
+        backgroundImage: `radial-gradient(circle at 30% 30%, ${GOLD_SOFT}55, transparent 60%), linear-gradient(135deg, ${accent}, #1c1c1e)`,
+        display: 'grid', placeItems: 'center', borderBottom: `1px solid ${LINE}`,
+      }}>
+        <div style={{ fontSize: 44, filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))' }}>{hero}</div>
+        <div style={{
+          position: 'absolute', top: 10, right: 10,
+          background: 'rgba(14,14,16,0.85)', backdropFilter: 'blur(4px)',
+          padding: '4px 8px', borderRadius: 999,
+          display: 'flex', alignItems: 'center', gap: 4,
+          fontSize: 11, fontWeight: 700, color: INK,
+        }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill={GOLD} stroke={GOLD} strokeWidth="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span>{rating}</span>
+        </div>
+      </div>
+      <div style={{ padding: 14, flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: GOLD, textTransform: 'uppercase' }}>{cuisine}</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: INK, letterSpacing: '-0.01em', lineHeight: 1.25 }}>{name}</div>
+        <div style={{ fontSize: 12, color: INK_2, display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+          <span>{distance}</span><span style={{ color: INK_3 }}>·</span><span>{price}</span>
+        </div>
+      </div>
+      <div style={{ display: 'flex', borderTop: `1px solid ${LINE}` }}>
+        <button onClick={onCall} style={{
+          flex: 1, padding: '11px 8px', background: 'none', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          fontSize: 12, fontWeight: 700, color: GOLD, fontFamily: 'inherit',
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.75" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          Call
+        </button>
+        <button onClick={onDirections} style={{
+          flex: 1, padding: '11px 8px', background: 'none', border: 'none',
+          borderLeft: `1px solid ${LINE}`, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          fontSize: 12, fontWeight: 700, color: GOLD, fontFamily: 'inherit',
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.75" strokeLinecap="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+          Directions
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Capability cards shown in the RCS view (mirrors onboarding-rcs.html)
+const ONBOARDING_CAPS = [
+  { id: 'companion', tag: 'For you',        title: 'Your AI Companion',     description: 'Random questions, drafts, advice — anytime.',                              icon: 'help' },
+  { id: 'callbehalf',tag: 'On your behalf', title: 'Calls on Your Behalf',  description: 'Book, follow up, sort issues — I’ll make the call so you don’t.', icon: 'phone' },
+  { id: 'briefing',  tag: 'Daily',          title: 'Reminders & Briefings', description: 'Medicine, meetings, bills — and a tidy daily snapshot.',                   icon: 'calendar' },
+  { id: 'screening', tag: 'Calls',          title: 'Call Intelligence',     description: 'Recaps, key points, follow-ups from your calls.',                          icon: 'sparkles' },
+];
+
+// ── Calling overlay (full-screen "Jia is calling Bastian…") ──
+function CallingOverlay({ place, phase }) {
+  const labels = {
+    calling: `Calling ${place}…`,
+    connected: 'Connected — confirming your table',
+    booked: 'Booking confirmed',
+  };
+  const subs = {
+    calling: 'Hold on — Jia is reserving for you.',
+    connected: 'Almost there.',
+    booked: 'Your table is locked in.',
+  };
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, zIndex: 50,
+      background: 'rgba(8,8,10,0.94)', backdropFilter: 'blur(10px)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      gap: 22, padding: 32, color: '#fff', animation: 'jia-in 280ms ease-out both',
+    }}>
+      <div style={{ position: 'relative', width: 140, height: 140 }}>
+        {phase === 'calling' && [0,1,2].map(i => (
+          <span key={i} style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            border: `2px solid ${GOLD_BORDER}`,
+            animation: `pulse-out-overlay 1.6s ${i*0.5}s ease-out infinite`,
+          }}/>
+        ))}
+        <div style={{
+          position: 'absolute', inset: 24, borderRadius: '50%',
+          background: phase === 'booked'
+            ? 'linear-gradient(145deg, #6FE383, #25AB21)'
+            : `linear-gradient(145deg, ${GOLD_SOFT}, ${GOLD})`,
+          display: 'grid', placeItems: 'center',
+          boxShadow: phase === 'booked'
+            ? '0 0 60px rgba(78,214,90,0.5)'
+            : '0 0 60px rgba(247,171,32,0.55)',
+          transition: 'all 320ms ease',
+        }}>
+          {phase === 'booked' ? (
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+          ) : (
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="#0E0E10"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          )}
+        </div>
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: 19, fontWeight: 700, color: phase === 'booked' ? '#6FE383' : INK, letterSpacing: '-0.01em' }}>{labels[phase]}</div>
+        <div style={{ marginTop: 6, fontSize: 13, color: INK_2 }}>{subs[phase]}</div>
+      </div>
+    </div>
+  );
+}
+
+// ── TaskCompleteCard for booking confirmation ──
+function TaskCompleteCard({ title, subtitle, details = [], ctas = [], onCta }) {
+  return (
+    <div style={{
+      background: BG, border: `1.5px solid ${GOLD_BORDER}`, borderRadius: 20, overflow: 'hidden',
+      boxShadow: '0 2px 8px rgba(201,150,43,0.10)',
+    }}>
+      <div style={{
+        background: `linear-gradient(180deg, ${GOLD_TINT}, ${BG})`,
+        padding: '16px 16px 12px', display: 'flex', alignItems: 'center', gap: 12,
+      }}>
+        <div style={{ width: 36, height: 36, borderRadius: 999, background: GOLD, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: INK, letterSpacing: '-0.01em' }}>{title}</div>
+          {subtitle && <div style={{ fontSize: 13, color: INK_2, marginTop: 2 }}>{subtitle}</div>}
+        </div>
+      </div>
+      {details.length > 0 && (
+        <div style={{ padding: '4px 16px 14px' }}>
+          {details.map((d, i) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0',
+              borderTop: i === 0 ? 'none' : `1px solid ${LINE}`,
+            }}>
+              <div style={{ width: 18, color: GOLD, display: 'grid', placeItems: 'center' }}>{d.icon}</div>
+              <div style={{ fontSize: 13, color: INK_2, flex: 1 }}>{d.label}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: INK }}>{d.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {ctas.length > 0 && (
+        <div style={{ display: 'flex', borderTop: `1px solid ${LINE}` }}>
+          {ctas.map((c, i) => (
+            <button key={i} onClick={() => onCta && onCta(c)} style={{
+              flex: 1, padding: '14px 12px', background: 'none', border: 'none',
+              cursor: 'pointer', fontSize: 14, fontWeight: 700, color: GOLD,
+              borderLeft: i === 0 ? 'none' : `1px solid ${LINE}`, fontFamily: 'inherit',
+            }}>{c}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const ICON = {
+  cal:  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>,
+  pin:  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
+  user: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>,
+};
+
+// ── Scenarios for RCS chip interaction (Stage 4B · unknown caller) ──
+const SCENARIOS = [
+  {
+    match: /^listen in/i,
+    reply: () => [
+      { kind: 'system-msg', text: "🎧 You're listening in — Rohit can't hear you." },
+    ],
+  },
+  {
+    match: /^take the call|^join$/i,
+    reply: () => [
+      { kind: 'join-call' },
+    ],
+  },
+  {
+    match: /^decline$/i,
+    reply: () => [
+      { kind: 'mark-decline' },
+    ],
+  },
+  {
+    match: /^(block number)/i,
+    reply: () => [
+      { kind: 'typing', ms: 400 },
+      { kind: 'text', text: "Blocked +91 98765 43210. Future calls from this number will go to voicemail automatically." },
+    ],
+  },
+  {
+    match: /^(report as spam)/i,
+    reply: () => [
+      { kind: 'typing', ms: 400 },
+      { kind: 'text', text: "Reported. This number is now flagged across the Jio network as a sales caller — others will be warned too." },
+    ],
+  },
+  {
+    match: /^(mark as done|done)/i,
+    reply: () => [
+      { kind: 'typing', ms: 400 },
+      { kind: 'text', text: "Marked as done — see you next time!" },
+    ],
+  },
+];
+
+function jiaRespond(text) {
+  for (const s of SCENARIOS) {
+    if (s.match.test(text)) return s.reply(text);
+  }
+  return [
+    { kind: 'typing', ms: 400 },
+    { kind: 'text', text: "Got it." },
+  ];
+}
+
+function Composer({ value, onChange, onSubmit, disabled }) {
+  const handle = (e) => { e.preventDefault(); if (!value.trim() || disabled) return; onSubmit(value.trim()); };
+  return (
+    <form onSubmit={handle} style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: '8px 10px 10px', background: '#fff',
+      borderTop: '1px solid #E6E6E9', flexShrink: 0,
+    }}>
+      <button type="button" style={{
+        width: 40, height: 40, borderRadius: 999, border: 'none',
+        background: '#EBF1FF', display: 'grid', placeItems: 'center', cursor: 'pointer', flexShrink: 0,
+      }}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F4FD0" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <div style={{
+        flex: 1, display: 'flex', alignItems: 'center', gap: 6,
+        background: '#F4F5F8', borderRadius: 999, padding: '4px 6px 4px 14px', minHeight: 40,
+        border: '1px solid #E6E6E9',
+      }}>
+        <input value={value} onChange={e => onChange(e.target.value)} placeholder="Type a note for Jia…" disabled={disabled}
+          style={{
+            flex: 1, border: 'none', background: 'none', outline: 'none',
+            fontSize: 15, color: '#0E0E10', fontFamily: 'inherit', minWidth: 0, padding: '6px 0',
+          }}/>
+        <button type="button" style={{ width: 32, height: 32, borderRadius: 999, border: 'none', background: 'none', cursor: 'pointer' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5C5C66" strokeWidth="1.75" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+        </button>
+      </div>
+      {value && value.trim() ? (
+        <button type="submit" disabled={disabled} style={{
+          width: 40, height: 40, borderRadius: 999, border: 'none', flexShrink: 0,
+          background: `linear-gradient(145deg, ${GOLD_SOFT}, ${GOLD})`,
+          display: 'grid', placeItems: 'center', cursor: disabled ? 'default' : 'pointer',
+          boxShadow: '0 1px 2px rgba(201,150,43,0.35)',
+        }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#0E0E10"><path d="M3 12l18-8-8 18-2-8-8-2z"/></svg>
+        </button>
+      ) : (
+        <button type="button" style={{
+          width: 40, height: 40, borderRadius: 999, border: 'none', flexShrink: 0,
+          background: GOLD_TINT, display: 'grid', placeItems: 'center', cursor: 'pointer',
+        }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.75" strokeLinecap="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg>
+        </button>
+      )}
+    </form>
+  );
+}
+
+function DateDivider({ label }) {
+  return <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 600, color: INK_3, padding: '16px 0 8px' }}>{label}</div>;
+}
+
+// Card factory
+function renderRcsCard(card, props, onChip) {
+  if (card === 'taskBooking') {
+    return <TaskCompleteCard
+      title="Table reserved"
+      subtitle={`${props.place} · ${props.partySize} guests`}
+      details={[
+        { icon: ICON.cal,  label: 'When',  value: props.when },
+        { icon: ICON.pin,  label: 'Where', value: props.address },
+        { icon: ICON.user, label: 'Confirmation', value: props.ref || ('BST-' + Math.floor(1000 + Math.random()*9000)) },
+      ]}
+      ctas={['Add to calendar', 'Share', 'Cancel']}
+      onCta={onChip}/>;
+  }
+  return null;
+}
+
+// Capability card (used in onboarding RCS view)
+const CAP_ICONS = {
+  help:    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17.02l.01-.01"/></svg>,
+  phone:   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
+  calendar:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>,
+  sparkles:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>,
+};
+function CapabilityCard({ icon, tag, title, description }) {
+  return (
+    <div style={{
+      flexShrink: 0, width: 204, minHeight: 240,
+      background: BG, border: `1px solid ${LINE}`, borderRadius: 20,
+      padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
+    }}>
+      <div style={{ width: 44, height: 44, borderRadius: 12, background: GOLD_TINT, display: 'grid', placeItems: 'center' }}>
+        {CAP_ICONS[icon] || CAP_ICONS.help}
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: GOLD, textTransform: 'uppercase', marginBottom: 6 }}>{tag}</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: INK, lineHeight: 1.25, marginBottom: 6, letterSpacing: '-0.01em' }}>{title}</div>
+        <div style={{ fontSize: 13, color: INK_2, lineHeight: 1.4 }}>{description}</div>
+      </div>
+    </div>
+  );
+}
+
+function RcsScreen({ messages, typing, input, onInputChange, onSubmit, onChip, onBack, disabled, callActive }) {
+  const scrollRef = useRef(null);
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, typing]);
+
+  return (
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column', background: '#F4F5F8', overflow: 'hidden',
+      animation: 'slide-up 380ms cubic-bezier(0.4, 0.0, 0.2, 1) both',
+      color: '#0E0E10',
+    }}>
+      <RcsHeader onBack={onBack} callActive={callActive}/>
+      <div ref={scrollRef} style={{
+        flex: 1, overflowY: 'auto', padding: '12px 12px 12px',
+        display: 'flex', flexDirection: 'column', gap: 3,
+      }}>
+        <div style={{
+          textAlign: 'center', fontSize: 11, fontWeight: 600, color: '#5C5C66',
+          padding: '4px 8px 12px', letterSpacing: '0.04em',
+        }}>LIVE TRANSCRIPT · Today, {new Date().getHours()}:{String(new Date().getMinutes()).padStart(2,'0')}</div>
+        {messages.map((m, i) => {
+          const prev = messages[i-1], next = messages[i+1];
+          const samePrev = prev && prev.role === m.role && prev.kind === 'text' && m.kind === 'text';
+          const sameNext = next && next.role === m.role && next.kind === 'text' && m.kind === 'text';
+          const corner = samePrev && sameNext ? 'mid' : samePrev ? 'bot' : sameNext ? 'top' : 'full';
+          const showAvatar = m.role === 'assistant' && (!sameNext || next.kind !== 'text');
+          return (
+            <div key={m.id} style={{ animation: 'jia-in 280ms ease-out both', marginTop: samePrev ? 2 : 8 }}>
+              {m.kind === 'text' && m.role === 'assistant' && (
+                <>
+                  <AssistantBubble text={m.text} showAvatar={showAvatar} corner={corner}/>
+                  {m.chips && <Chips chips={m.chips} onTap={onChip}/>}
+                </>
+              )}
+              {m.kind === 'text' && m.role === 'user' && (
+                <UserBubble text={m.text} corner={corner}/>
+              )}
+              {m.kind === 'carousel' && (
+                <>
+                  <div style={{ marginLeft: 34 }}>
+                    <div style={{
+                      display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'visible',
+                      padding: '2px 16px 8px 0', scrollSnapType: 'x mandatory', scrollbarWidth: 'none',
+                      WebkitOverflowScrolling: 'touch',
+                    }}>
+                      {(m.items || []).map(it => (
+                        <div key={it.id} style={{ scrollSnapAlign: 'start' }}>
+                          <CapabilityCard tag={it.tag} title={it.title} description={it.description} icon={it.icon}/>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {m.chips && <Chips chips={m.chips} onTap={onChip}/>}
+                </>
+              )}
+              {m.kind === 'card' && (
+                <>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end' }}>
+                    <div style={{ width: 28, flexShrink: 0 }}>
+                      {showAvatar && <JiaAvatar size={28}/>}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0, maxWidth: '86%' }}>
+                      {renderRcsCard(m.card, m.cardProps || {}, onChip)}
+                    </div>
+                  </div>
+                  {m.chips && <Chips chips={m.chips} onTap={onChip}/>}
+                </>
+              )}
+              {m.kind === 'system' && (
+                <div style={{
+                  textAlign: 'center', fontSize: 12, color: '#5C5C66',
+                  padding: '6px 16px', fontWeight: 500, letterSpacing: '-0.005em',
+                }}>{m.text}</div>
+              )}
+              {m.kind === 'chips' && (
+                <div style={{
+                  display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap',
+                  padding: '4px 16px 8px',
+                }}>
+                  {m.chips.map((c, i) => (
+                    <button key={i} onClick={() => onChip(c)} style={{
+                      padding: '9px 18px', background: '#fff',
+                      border: '1.5px solid #1F4FD0', color: '#1F4FD0',
+                      borderRadius: 999, fontSize: 13, fontWeight: 700,
+                      cursor: 'pointer', fontFamily: 'inherit',
+                      letterSpacing: '-0.005em',
+                      boxShadow: '0 1px 2px rgba(15,28,86,0.06)',
+                    }}>{c}</button>
+                  ))}
+                </div>
+              )}
+              {m.kind === 'transcript' && (
+                <div style={{
+                  display: 'flex', alignItems: 'flex-end', gap: 6,
+                  flexDirection: m.role === 'jia' ? 'row' : 'row-reverse',
+                  maxWidth: '86%',
+                  marginLeft: m.role === 'jia' ? 0 : 'auto',
+                }}>
+                  <div style={{ width: 28, flexShrink: 0 }}>
+                    {m.role === 'jia'
+                      ? <JiaAvatar size={28}/>
+                      : <div style={{
+                          width: 28, height: 28, borderRadius: 999,
+                          background: `linear-gradient(145deg, #6E91F0, ${ANANYA.accent} 70%)`,
+                          color: '#fff', fontWeight: 900, fontSize: 13, letterSpacing: '-0.02em',
+                          display: 'grid', placeItems: 'center',
+                        }}>{ANANYA.initial}</div>
+                    }
+                  </div>
+                  <div style={{
+                    background: m.role === 'jia' ? '#fff' : '#EBF1FF',
+                    color: '#0E0E10',
+                    border: m.role === 'jia' ? '1px solid #E6E6E9' : '1px solid #C2D5F8',
+                    borderRadius: m.role === 'jia' ? '18px 18px 18px 6px' : '18px 18px 6px 18px',
+                    padding: '10px 14px',
+                    fontSize: 14, lineHeight: 1.4, letterSpacing: '-0.005em',
+                    whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                    boxShadow: '0 1px 2px rgba(15,28,86,0.05)',
+                  }}>
+                    <div style={{
+                      fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+                      color: m.role === 'jia' ? GOLD : ANANYA.accent, marginBottom: 3,
+                    }}>{m.role === 'jia' ? 'Jia' : 'Rohit · Unknown'}</div>
+                    {m.text}
+                  </div>
+                </div>
+              )}
+              {m.kind === 'summary' && (
+                <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', marginTop: 8 }}>
+                  <div style={{ width: 28, flexShrink: 0 }}><JiaAvatar size={28}/></div>
+                  <div style={{ flex: 1, minWidth: 0, maxWidth: '86%' }}>
+                    <div style={{
+                      background: '#fff', border: '1.5px solid #1F4FD0', borderRadius: 20,
+                      overflow: 'hidden', boxShadow: '0 4px 14px rgba(15,28,86,0.08)',
+                    }}>
+                      <div style={{
+                        background: 'linear-gradient(180deg, #EBF1FF, #fff)',
+                        padding: '14px 16px',
+                      }}>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: '#1F4FD0', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>MyJio · Call summary</div>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: '#0E0E10', letterSpacing: '-0.01em' }}>{m.title}</div>
+                        <div style={{ fontSize: 13, color: '#5C5C66', marginTop: 6, lineHeight: 1.5 }}>{m.body}</div>
+                      </div>
+                      {m.chips && (
+                        <div style={{ display: 'flex', borderTop: '1px solid #E6E6E9' }}>
+                          {m.chips.map((c, i) => (
+                            <button key={i} onClick={() => onChip(c)} style={{
+                              flex: 1, padding: '12px 8px', background: 'none', border: 'none',
+                              borderLeft: i === 0 ? 'none' : '1px solid #E6E6E9',
+                              cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#1F4FD0',
+                              fontFamily: 'inherit',
+                            }}>{c}</button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {typing && <div style={{ marginTop: 8, animation: 'jia-in 200ms ease-out' }}><TypingIndicator/></div>}
+      </div>
+      <Composer value={input} onChange={onInputChange} onSubmit={onSubmit} disabled={disabled}/>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// CONVERSATION SCRIPT — Stage 4B · Unknown caller
+// ─────────────────────────────────────────────────────────────────
+// Unknown number calls. Jia intercepts BEFORE the phone rings. User
+// sees a notification at the top, taps it, watches the live transcript,
+// reads enough to know it's a sales call, then taps Decline.
+const CALL_SCRIPT = [
+  ['notify-rcs'],   // RCS notification + initial system bubble
+  ['turn', 'jia',    'ci2_jia_screen',  "Hello, this is Shreya's AI assistant. Shreya can't take calls right now. May I know who's calling and what this is regarding?"],
+  ['turn', 'ananya', 'ci2_rohit_intro', "Good morning ma'am! This is Rohit calling from HDFC Bank. We have a special pre-approved offer on our Diners Club credit card for Shreya — lifetime free, with 5x reward points. May I take 2 minutes of her time?"],
+  ['turn', 'jia',    'ci2_jia_probe',   "Got it, Rohit. A pre-approved credit card offer from HDFC. Shreya is busy right now, but I can pass on the message. Could you share the offer details so I can relay them?"],
+  ['turn', 'ananya', 'ci2_rohit_more',  "Of course! The card has a ₹2,500 joining fee waived for the first year, 4 reward points per ₹150 spent, and complimentary airport lounge access. Would 6 PM today work for a callback?"],
+  ['await-decline'], // pause: wait for user to tap Decline. If user does nothing for 8s, auto-decline.
+  ['turn', 'jia',    'ci2_jia_decline', "Thanks for the details, Rohit. Shreya isn't interested in this offer. Please remove her number from your call list. Have a good day."],
+  ['summary'],
+];
+
+const INITIAL_RCS = [
+  { id: 'r1', role: 'system', kind: 'system',
+    text: "Jia screened an unknown call · " + CALLER.phone },
+  { id: 'r2', role: 'system', kind: 'chips',
+    chips: ['Listen in', 'Take the call', 'Decline'] },
+];
+
+// ─────────────────────────────────────────────────────────────────
+// MAIN APP
+// ─────────────────────────────────────────────────────────────────
+function App() {
+  useFitToViewport();
+  const [phase, setPhase]         = useState('idle');        // 'idle' (lock screen) | 'call' | 'pip' | 'ended'
+  const [ringCount, setRingCount] = useState(0);             // unused in 4B (no rings) but kept for shared scaffolding
+  const [orbState, setOrbState]   = useState('idle');
+  const [micGlow, setMicGlow]     = useState(false);
+  const [scriptIdx, setScriptIdx] = useState(0);
+  const [waitingUser, setWaitingUser] = useState(false);
+  const [callTime, setCallTime]   = useState('connecting…');
+  const [statusTime, setStatusTime] = useState(() => {
+    const d = new Date();
+    return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+  });
+  // RCS state
+  const [rcsMessages, setRcsMessages] = useState([]);
+  const [rcsTyping,   setRcsTyping]   = useState(false);
+  const [rcsInput,    setRcsInput]    = useState('');
+  const [rcsDisabled, setRcsDisabled] = useState(false);
+  const [overlay,     setOverlay]     = useState(null);
+  const [callDropped, setCallDropped] = useState(false);
+  const [showEndedPill, setShowEndedPill] = useState(false);
+  const [notification, setNotification] = useState(null); // { title, body }
+  const [rcsViewed, setRcsViewed] = useState(false); // track if user has opened RCS at least once
+  const callStartRef = useRef(0);
+  const timerRef     = useRef(null);
+  const phaseRef     = useRef(phase);
+  useEffect(() => { phaseRef.current = phase; }, [phase]);
+
+  // status bar clock
+  useEffect(() => {
+    const t = setInterval(() => {
+      const d = new Date();
+      setStatusTime(d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'));
+    }, 30_000);
+    return () => clearInterval(t);
+  }, []);
+
+  // call duration timer
+  useEffect(() => {
+    if (phase === 'call' || phase === 'pip') {
+      if (!callStartRef.current) callStartRef.current = Date.now();
+      timerRef.current = setInterval(() => {
+        const s = Math.floor((Date.now() - callStartRef.current) / 1000);
+        const m = Math.floor(s / 60), r = s % 60;
+        setCallTime(String(m).padStart(2,'0') + ':' + String(r).padStart(2,'0'));
+      }, 500);
+      return () => clearInterval(timerRef.current);
+    }
+  }, [phase]);
+
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  // Silently push the initial RCS messages (no typing animation — they're pre-shared)
+  const pushInitialRcs = useCallback(async () => {
+    setRcsMessages([]);
+    for (const msg of INITIAL_RCS) {
+      setRcsMessages(prev => [...prev, { ...msg, id: genId() }]);
+      await sleep(120);
+    }
+  }, []);
+
+  // Show the RCS notification banner during the call.
+  // Stays visible until user taps it or the call ends.
+  const showRcsNotification = useCallback(() => {
+    setNotification({ title: 'MyJio · Screening unknown caller', body: '+91 98765 43210 · tap to view transcript 👇' });
+  }, []);
+
+  const advanceCallRef = useRef(null);
+
+  // Recursive call advancer
+  const advanceCall = useCallback(async (idx) => {
+    if (phaseRef.current === 'ended') return;
+    const turn = CALL_SCRIPT[idx];
+    if (!turn) return;
+    const [type, payload] = turn;
+
+    if (type === 'notify-rcs') {
+      pushInitialRcs();
+      showRcsNotification();
+      setScriptIdx(idx + 1);
+      await sleep(200);
+      if (phaseRef.current !== 'ended') advanceCall(idx + 1);
+      return;
+    }
+    if (type === 'turn') {
+      // ['turn', speaker, clip, transcript]
+      const [, speaker, clip, transcript] = turn;
+      // Push transcript bubble first (it's "live")
+      setRcsMessages(prev => [...prev, {
+        id: genId(), role: speaker, kind: 'transcript', text: transcript,
+      }]);
+      // Orb visual cue: gold for Jia, purple-ish for Ananya
+      setOrbState(speaker === 'jia' ? 'speaking' : 'listening');
+      await playClip(clip);
+      if (phaseRef.current === 'ended') return;
+      setOrbState('idle');
+      setScriptIdx(idx + 1);
+      await sleep(450);
+      if (phaseRef.current !== 'ended') advanceCall(idx + 1);
+      return;
+    }
+    if (type === 'await-decline') {
+      // Pause the script. Wait up to 8s for the user to tap Decline.
+      // If they do, userDeclinedRef flips to true and we proceed.
+      // If they don't, auto-trigger decline so the demo always lands.
+      const start = Date.now();
+      while (!userDeclinedRef.current && (Date.now() - start) < 8000) {
+        if (phaseRef.current === 'ended') return;
+        await sleep(120);
+      }
+      if (!userDeclinedRef.current) {
+        // Auto-decline so the demo flows
+        setUserDeclined(true);
+      }
+      // Push a system bubble + a faint "you declined" indicator
+      setRcsMessages(prev => [...prev, {
+        id: genId(), role: 'system', kind: 'system',
+        text: "🚫 You declined the call · Jia will close it politely",
+      }]);
+      setScriptIdx(idx + 1);
+      await sleep(500);
+      if (phaseRef.current !== 'ended') advanceCall(idx + 1);
+      return;
+    }
+    if (type === 'summary') {
+      // Call ends, push summary card to RCS, drop the call
+      setOrbState('idle');
+      stopAudio();
+      setNotification(null);
+      await sleep(700);
+      setRcsMessages(prev => [...prev, {
+        id: genId(), role: 'system', kind: 'summary',
+        title: "Sales call · HDFC Bank",
+        body: "Pre-approved Diners Club credit card pitch from Rohit. You declined — this number is now flagged as sales/spam, future calls will be auto-blocked.",
+        chips: ['Block number', 'Report as spam', 'Mark as done'],
+      }]);
+      setCallDropped(true);
+      setShowEndedPill(true);
+      if (timerRef.current) clearInterval(timerRef.current);
+      setTimeout(() => setShowEndedPill(false), 3000);
+      setScriptIdx(idx + 1);
+      return;
+    }
+  }, [pushInitialRcs, showRcsNotification]);
+  advanceCallRef.current = advanceCall;
+
+  // Helper: stop the ring tone audio.
+  // Track whether user manually declined (drives await-decline script branch)
+  const [userDeclined, setUserDeclined] = useState(false);
+  const userDeclinedRef = useRef(false);
+  useEffect(() => { userDeclinedRef.current = userDeclined; }, [userDeclined]);
+
+  // Idle → screening transition: phone is on lock screen for 1.8s, then Jia
+  // intercepts the call (no ring at all, this is the whole point of 4B).
+  useEffect(() => {
+    if (phase !== 'idle') return;
+    const t = setTimeout(() => {
+      try {
+        const warm = AUDIO_CACHE['ci2_jia_screen'];
+        if (warm) { warm.muted = true; warm.play().then(() => { warm.pause(); warm.muted = false; warm.currentTime = 0; }).catch(()=>{}); }
+      } catch(_) {}
+      setPhase('call');
+      callStartRef.current = Date.now();
+      setRcsMessages([]); setOverlay(null);
+      setCallDropped(false); setShowEndedPill(false);
+      setNotification(null);
+      setUserDeclined(false);
+      advanceCallRef.current(0);
+    }, 1800);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  // Stubs kept so existing App handlers don't blow up (the lock screen has no buttons)
+  const acceptIncomingCall = useCallback(() => {}, []);
+  const declineIncomingCall = useCallback(() => {}, []);
+
+  const onMicTap = useCallback(() => {
+    if (!waitingUser) return;
+    setWaitingUser(false); setMicGlow(false);
+    advanceCallRef.current(scriptIdx);
+  }, [waitingUser, scriptIdx]);
+
+  const endCall = useCallback(() => {
+    stopAudio();
+    setPhase('ended');
+    setMicGlow(false); setOrbState('idle');
+    setOverlay(null);
+  }, []);
+
+  // Tap dynamic island in PIP → re-expand to call (only if call still active)
+  const expandCall = () => {
+    if (phase !== 'pip' || callDropped) return;
+    setPhase('call');
+    const next = CALL_SCRIPT[scriptIdx];
+    if (next && next[0] === 'shreya') {
+      setWaitingUser(true);
+      setMicGlow(true);
+    }
+  };
+  const restartDemo = () => {
+    callStartRef.current = 0;
+    setCallTime('connecting…');
+    setRcsMessages([]); setOverlay(null); setRcsTyping(false);
+    setCallDropped(false); setShowEndedPill(false);
+    setNotification(null);
+    setRingCount(0);
+    setUserDeclined(false);
+    setPhase('idle');
+  };
+
+  // RCS chip / composer interaction
+  const playRcsReply = useCallback(async (reply) => {
+    setRcsDisabled(true);
+    for (const item of reply) {
+      if (item.kind === 'typing') {
+        setRcsTyping(true); await sleep(item.ms || 800); setRcsTyping(false);
+        continue;
+      }
+      if (item.kind === 'system-msg') {
+        setRcsMessages(prev => [...prev, { id: genId(), role: 'system', kind: 'system', text: item.text }]);
+        await sleep(280);
+        continue;
+      }
+      if (item.kind === 'join-call') {
+        // User joins the call — stop audio, switch to user-on-call screen
+        stopAudio();
+        setRcsMessages(prev => [...prev, { id: genId(), role: 'system', kind: 'system', text: '📞 You joined the call. Jia handed it over.' }]);
+        await sleep(400);
+        setPhase('user-on-call');
+        continue;
+      }
+      if (item.kind === 'decline-call') {
+        stopAudio();
+        setRcsMessages(prev => [...prev, { id: genId(), role: 'system', kind: 'system', text: '🚫 You declined the call. Jia won\'t pick up future calls from this number for an hour.' }]);
+        await sleep(400);
+        setCallDropped(true);
+        setShowEndedPill(true);
+        if (timerRef.current) clearInterval(timerRef.current);
+        setTimeout(() => setShowEndedPill(false), 3000);
+        continue;
+      }
+      if (item.kind === 'mark-decline') {
+        // Just flag user as declined — script awaiter will pick it up + play Jia's polite decline.
+        setUserDeclined(true);
+        continue;
+      }
+      setRcsMessages(prev => [...prev, { ...item, role: 'assistant', id: genId() }]);
+      await sleep(280);
+    }
+    setRcsDisabled(false);
+  }, []);
+
+  const handleRcsMessage = useCallback(async (text) => {
+    if (!text || !text.trim() || rcsDisabled) return;
+    setRcsMessages(prev => [...prev, { id: genId(), role: 'user', kind: 'text', text: text.trim() }]);
+    setRcsInput('');
+    await sleep(280);
+    setRcsTyping(true);
+    const reply = jiaRespond(text.trim());
+    setRcsTyping(false);
+    await playRcsReply(reply);
+  }, [rcsDisabled, playRcsReply]);
+
+  return (
+    <div className="device">
+      <DynamicIsland
+        expanded={(phase === 'call' || phase === 'pip') && (!callDropped || showEndedPill)}
+        dropped={callDropped && showEndedPill}
+        timer={phase === 'connecting' ? '00:00' : (phase === 'call' || phase === 'pip') ? callTime : '00:00'}
+        onClick={callDropped ? undefined : expandCall}/>
+      <StatusBar time={statusTime}/>
+
+      {/* Render phase content */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+        {phase === 'idle' && <LockScreen statusTime={statusTime}/>}
+        {phase === 'user-on-call' && (
+          <div style={{
+            flex: 1, display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: 14,
+            color: '#fff', textAlign: 'center', padding: 32,
+            background: 'radial-gradient(ellipse at top, #0a0a0c 0%, #050505 80%)',
+          }}>
+            <div style={{ fontSize: 24, fontWeight: 700, color: '#F2F2F2' }}>You took the call</div>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', maxWidth: 260 }}>You're now on the call with Rohit. Jia handed it over.</div>
+            <button onClick={() => setPhase('ended')} style={{
+              marginTop: 20, width: 70, height: 70, borderRadius: '50%', background: '#FF3B30', border: 'none',
+              cursor: 'pointer', display: 'grid', placeItems: 'center', boxShadow: '0 6px 20px rgba(255,59,48,0.4)',
+            }}>
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="white"><path d="M21 15.46l-5.27-.61a1.25 1.25 0 0 0-1.06.36l-2.16 2.17a16 16 0 0 1-7.06-7.07l2.18-2.16a1.25 1.25 0 0 0 .36-1.06L7.39 1.83A1.25 1.25 0 0 0 6.16 1H3a2 2 0 0 0-2 2 22 22 0 0 0 22 22 2 2 0 0 0 2-2v-3.16a1.25 1.25 0 0 0-1-1.38z" transform="rotate(135 12 12)"/></svg>
+            </button>
+          </div>
+        )}
+        {(phase === 'connecting' || phase === 'call') && (
+          <CallScreen
+            orbState={orbState} micGlow={micGlow}
+            callTimer={phase === 'connecting' ? 'connecting…' : callTime}
+            onMicTap={onMicTap} onEnd={endCall}/>
+        )}
+        {phase === 'pip' && <RcsScreen
+          messages={rcsMessages} typing={rcsTyping}
+          input={rcsInput} onInputChange={setRcsInput}
+          onSubmit={handleRcsMessage} onChip={handleRcsMessage}
+          disabled={rcsDisabled} onBack={callDropped ? restartDemo : expandCall}
+          callActive={!callDropped}/>}
+        {phase === 'pip' && overlay && <CallingOverlay place={overlay.place} phase={overlay.phase}/>}
+        {phase === 'ended' && (
+          <div style={{
+            flex: 1, display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: 14,
+            color: '#fff', textAlign: 'center', padding: 32,
+            background: 'radial-gradient(ellipse at top, #0a0a0c 0%, #050505 80%)',
+          }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: GOLD }}>Call ended</div>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)' }}>Duration {callTime}</div>
+            <button onClick={restartDemo} style={{
+              marginTop: 8, padding: '12px 28px', borderRadius: 999,
+              background: GOLD, border: 'none', color: '#0E0E10',
+              fontFamily: 'inherit', fontWeight: 700, fontSize: 16, cursor: 'pointer',
+            }}>Try the demo again</button>
+          </div>
+        )}
+      </div>
+
+      {/* RCS notification banner — appears mid-call when Jia mentions the visual.
+          Tap to peek at RCS (PIP); auto-dismisses after a few seconds. */}
+      {notification && (phase === 'call' || phase === 'connecting') && (
+        <div onClick={() => {
+          setNotification(null);
+          setRcsViewed(true);
+          if (phase === 'call') setPhase('pip');
+        }} style={{
+          position: 'absolute', top: 56, left: 12, right: 12, zIndex: 80,
+          background: 'rgba(28,28,32,0.94)', backdropFilter: 'blur(14px)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: 18, padding: '10px 14px',
+          display: 'flex', alignItems: 'center', gap: 12,
+          boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+          animation: 'jia-in 320ms cubic-bezier(0.4, 0.0, 0.2, 1) both',
+          cursor: 'pointer',
+        }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 8,
+            background: `linear-gradient(145deg, ${GOLD_SOFT}, ${GOLD})`,
+            display: 'grid', placeItems: 'center', flexShrink: 0,
+            color: '#0E0E10', fontWeight: 900, fontSize: 16, letterSpacing: '-0.02em',
+          }}>J</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: INK, letterSpacing: '-0.005em' }}>{notification.title}</div>
+            <div style={{ fontSize: 12, color: INK_2, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{notification.body}</div>
+          </div>
+          <div style={{ fontSize: 10, color: INK_3, flexShrink: 0 }}>now</div>
+        </div>
+      )}
+
+      <div className="home-indicator"></div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App/>);
+</script>
+</body>
+</html>
