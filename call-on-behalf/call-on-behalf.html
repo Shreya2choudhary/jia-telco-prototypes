@@ -157,6 +157,18 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (window.Babel && typeof window.Babel.transformScriptTags === 'function') {
       window.Babel.transformScriptTags();
     }
+
+    // Hash-based deep linking: /call-on-behalf.html#msgpg jumps straight to
+    // Messages mode (or #callpg, #hybpg). Polls for window.nav (defined in
+    // the template) to become available, then routes once.
+    const __hash = (window.location.hash || '').slice(1);
+    if (__hash) {
+      const __tryNav = (tries) => {
+        if (typeof window.nav === 'function') { window.nav(__hash); return; }
+        if (tries > 0) setTimeout(() => __tryNav(tries - 1), 80);
+      };
+      __tryNav(40);
+    }
   } catch (err) {
     setStatus('Error unpacking: ' + err.message);
     console.error('Bundle unpack error:', err);

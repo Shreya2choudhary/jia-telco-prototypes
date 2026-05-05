@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Jia — Telco Prototypes</title>
+<title>Jia — All prototypes</title>
+<meta name="description" content="Six-stage prototype suite for Jia, the Jio AI companion: onboarding, AI companion, call on my behalf, call intelligence, daily briefing, proactive reminders.">
 <style>
   @font-face { font-family: 'JioType'; font-weight: 500; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
   @font-face { font-family: 'JioType'; font-weight: 700; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
@@ -12,39 +13,98 @@
   body {
     font-family: 'JioType', system-ui, sans-serif;
     background: #0A0A0B; color: #F2F2F2; min-height: 100vh;
-    display: flex; align-items: center; justify-content: center; padding: 24px;
+    display: flex; align-items: flex-start; justify-content: center; padding: 60px 24px;
+    background-image:
+      radial-gradient(ellipse 800px 400px at 20% -10%, rgba(247,171,32,0.10), transparent),
+      radial-gradient(ellipse 600px 300px at 90% 0%, rgba(124,58,237,0.08), transparent);
   }
-  .wrap { max-width: 920px; width: 100%; }
-  .head { text-align: center; margin-bottom: 40px; }
+  .wrap { max-width: 1100px; width: 100%; }
+
+  .head { text-align: center; margin-bottom: 56px; }
   .logo {
-    width: 88px; height: 88px; border-radius: 999px; margin: 0 auto 20px;
+    width: 96px; height: 96px; border-radius: 999px; margin: 0 auto 22px;
     background: linear-gradient(145deg, #FFC86B, #F7AB20);
     display: grid; place-items: center; color: #0E0E10;
-    font-weight: 900; font-size: 44px; letter-spacing: -0.04em;
-    box-shadow: 0 6px 30px rgba(247,171,32,0.4);
+    font-weight: 900; font-size: 50px; letter-spacing: -0.04em;
+    box-shadow: 0 10px 50px rgba(247,171,32,0.45);
   }
-  h1 { font-size: 44px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 10px; }
-  .sub { color: #A8A8A8; font-size: 17px; max-width: 540px; margin: 0 auto; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+  .eyebrow {
+    font-size: 11px; font-weight: 800; color: #F7AB20;
+    letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 12px;
+  }
+  h1 {
+    font-size: 56px; font-weight: 900; letter-spacing: -0.035em; margin-bottom: 14px;
+    background: linear-gradient(180deg, #ffffff 30%, #b5b5b8 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1.05;
+  }
+  h1 small { display: block; font-size: 26px; font-weight: 600; color: #A8A8A8; margin-top: 8px; -webkit-text-fill-color: #A8A8A8; }
+  .sub { color: #A8A8A8; font-size: 17px; max-width: 620px; margin: 0 auto; line-height: 1.55; }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 22px;
+  }
+
   .card {
-    background: #1C1C1E; border: 1px solid #2A2A2A; border-radius: 24px;
-    padding: 28px 24px; text-decoration: none; color: inherit; display: flex; flex-direction: column;
-    transition: border-color 200ms, transform 150ms;
+    position: relative; overflow: hidden;
+    background: #1C1C1E; border: 1px solid #2A2A2A; border-radius: 28px;
+    padding: 30px 28px 26px; text-decoration: none; color: inherit;
+    display: flex; flex-direction: column;
+    transition: border-color 200ms, transform 150ms, background 200ms;
   }
-  .card:hover { border-color: rgba(247,171,32,0.45); transform: translateY(-3px); }
+  .card::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(247,171,32,0.08), transparent 40%);
+    pointer-events: none; opacity: 0; transition: opacity 200ms;
+  }
+  .card:hover { border-color: rgba(247,171,32,0.45); transform: translateY(-4px); }
+  .card:hover::before { opacity: 1; }
+
   .card .num {
-    font-size: 11px; font-weight: 800; color: #F7AB20; letter-spacing: 0.1em;
-    text-transform: uppercase; margin-bottom: 10px;
+    font-size: 11px; font-weight: 800; color: #F7AB20; letter-spacing: 0.14em;
+    text-transform: uppercase; margin-bottom: 8px;
   }
-  .card h2 { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 8px; line-height: 1.15; }
-  .card p { font-size: 14px; color: #A8A8A8; line-height: 1.5; flex: 1; }
+  .card h2 { font-size: 26px; font-weight: 900; letter-spacing: -0.025em; margin-bottom: 10px; line-height: 1.1; }
+  .card p { font-size: 14.5px; color: #A8A8A8; line-height: 1.55; flex: 1; }
+  .card .meta {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-top: 16px; font-size: 12px; color: #6E6E6E;
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 999px;
+    background: rgba(247,171,32,0.10); border: 1px solid rgba(247,171,32,0.25);
+    color: #F7AB20; font-weight: 700; font-size: 11px;
+  }
+  .pill.muted {
+    background: rgba(255,255,255,0.04); border: 1px solid #2A2A2A; color: #6E6E6E;
+  }
   .card .cta {
-    margin-top: 18px; font-size: 14px; font-weight: 700; color: #F7AB20;
-    display: flex; align-items: center; gap: 4px;
+    margin-top: 22px; font-size: 14px; font-weight: 700; color: #F7AB20;
+    display: inline-flex; align-items: center; gap: 6px;
   }
+  .card .cta svg { transition: transform 200ms; }
+  .card:hover .cta svg { transform: translateX(3px); }
+
+  .card.placeholder { border-style: dashed; cursor: default; opacity: 0.78; }
+  .card.placeholder:hover { transform: none; border-color: #2A2A2A; }
+  .card.placeholder::before { display: none; }
+  .card.placeholder .num { color: #8A8A8A; }
+  .card.placeholder h2 { color: #C0C0C2; }
+  .card.placeholder .cta { color: #6E6E6E; }
+
   .footer {
-    text-align: center; margin-top: 40px;
-    color: #6E6E6E; font-size: 12px; line-height: 1.6;
+    text-align: center; margin-top: 56px;
+    color: #6E6E6E; font-size: 12px; line-height: 1.7;
+  }
+  .footer a { color: #F7AB20; text-decoration: none; font-weight: 700; }
+  .footer a:hover { text-decoration: underline; }
+
+  @media (max-width: 600px) {
+    body { padding: 32px 16px; }
+    h1 { font-size: 40px; } h1 small { font-size: 20px; }
+    .head { margin-bottom: 36px; }
   }
 </style>
 </head>
@@ -52,33 +112,82 @@
 <div class="wrap">
   <div class="head">
     <div class="logo">J</div>
-    <div style="font-size: 11px; font-weight: 800; color: #F7AB20; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px;">Stage 2 — AI Companion</div>
-    <h1>Jia — AI Companion</h1>
-    <p class="sub">Three prototypes exploring how subscribers reach Jia via voice, RCS, or both. Already onboarded? <a href="onboarding/" style="color: #F7AB20; font-weight: 700; text-decoration: none;">→ Open Stage 1 (onboarding)</a></p>
+    <div class="eyebrow">Jia · Telco prototype suite</div>
+    <h1>Meet Jia<small>The Jio AI companion · all prototypes in one place</small></h1>
+    <p class="sub">Six stages, one assistant. Click any tile to open the prototype set for that stage. Stages 5 and 6 are coming soon.</p>
   </div>
+
   <div class="grid">
-    <a class="card" href="jia-voice.html">
-      <div class="num">01 · Voice only</div>
-      <h2>Dial #555</h2>
-      <p>iPhone-style audio call. Jia greets, Shreya speaks via the mic, conversation cycles through weather and cricket score. Audio-only — no captions.</p>
-      <div class="cta">Open prototype →</div>
+
+    <a class="card" href="onboarding/">
+      <div class="num">Stage 1</div>
+      <h2>Onboarding</h2>
+      <p>How a new subscriber meets Jia for the first time. Three channels: a phone call to <code>#5555</code>, an RCS thread, and the MyJio app. Same outcome — Jia knows you, you know Jia.</p>
+      <div class="meta">
+        <span class="pill">3 prototypes</span>
+        <span>Call · RCS · MyJio</span>
+      </div>
+      <div class="cta">Open Stage 1 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg></div>
     </a>
-    <a class="card" href="jia-rcs.html">
-      <div class="num">02 · RCS only</div>
-      <h2>Messages</h2>
-      <p>Full RCS thread. Restaurants in Bandra, weather card, live cricket score, bill payment — full Jia conversation with rich cards and chips.</p>
-      <div class="cta">Open prototype →</div>
+
+    <a class="card" href="ai-companion/">
+      <div class="num">Stage 2</div>
+      <h2>AI Companion</h2>
+      <p>Day-to-day Jia. Ask about restaurants in Bandra, the weather, the cricket score, pay a bill — via voice, RCS, or both at once.</p>
+      <div class="meta">
+        <span class="pill">3 prototypes</span>
+        <span>Voice · RCS · Hybrid</span>
+      </div>
+      <div class="cta">Open Stage 2 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg></div>
     </a>
-    <a class="card" href="jia-voice-rcs.html">
-      <div class="num">03 · Voice + RCS</div>
-      <h2>The hybrid</h2>
-      <p>Call starts on iPhone, Shreya asks for restaurants, Jia says "I've sent options", call PiPs to the dynamic island and RCS slides up with the carousel.</p>
-      <div class="cta">Open prototype →</div>
+
+    <a class="card" href="call-on-behalf/">
+      <div class="num">Stage 3</div>
+      <h2>Call on my behalf</h2>
+      <p>You ask Jia to call a restaurant or vendor for you. Jia dials, talks to the human, gets the answer back. Three modes inside.</p>
+      <div class="meta">
+        <span class="pill">3 modes</span>
+        <span>RCS · Voice · MyJio</span>
+      </div>
+      <div class="cta">Open Stage 3 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg></div>
     </a>
+
+    <a class="card" href="call-intelligence/">
+      <div class="num">Stage 4</div>
+      <h2>Call Intelligence</h2>
+      <p>Jia answers the calls you can't. Known callers ring 5x then auto-answer; unknown numbers get screened before the phone even rings. Take a message, listen in, or decline.</p>
+      <div class="meta">
+        <span class="pill">4 prototypes</span>
+        <span>Known · Unknown · RCS · MyJio</span>
+      </div>
+      <div class="cta">Open Stage 4 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <div class="card placeholder">
+      <div class="num">Stage 5</div>
+      <h2>Daily Briefing</h2>
+      <p>Jia gets your morning ready — weather, calendar, traffic, news, anything you've subscribed to. Audio first, with an RCS card you can scroll. Coming soon.</p>
+      <div class="meta">
+        <span class="pill muted">In design</span>
+      </div>
+      <div class="cta">Coming soon</div>
+    </div>
+
+    <div class="card placeholder">
+      <div class="num">Stage 6</div>
+      <h2>Proactive Reminders</h2>
+      <p>Jia nudges you about the things she knows are coming — bills due, flights, follow-ups, gentle nags. With your permission. Coming soon.</p>
+      <div class="meta">
+        <span class="pill muted">In design</span>
+      </div>
+      <div class="cta">Coming soon</div>
+    </div>
+
   </div>
+
   <div class="footer">
-    Voice via Sarvam AI TTS (Anushka for Jia, Manisha for Shreya). All flows are scripted.<br/>
-    Other stages: <a href="onboarding/" style="color: #F7AB20; text-decoration: none; font-weight: 700;">Stage 1 — Onboarding</a> · <a href="call-on-behalf/" style="color: #F7AB20; text-decoration: none; font-weight: 700;">Stage 3 — Call on my behalf</a> · <a href="call-intelligence/" style="color: #F7AB20; text-decoration: none; font-weight: 700;">Stage 4 — Call intelligence</a>
+    Voice via Sarvam AI TTS · all flows scripted · iPhone-style mobile frame.<br/>
+    Source: <a href="https://github.com/Shreya2choudhary/jia-telco-prototypes">github.com/Shreya2choudhary/jia-telco-prototypes</a>
   </div>
 </div>
 </body>

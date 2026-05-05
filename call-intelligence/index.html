@@ -70,10 +70,19 @@
   }
   .footer a { color: #F7AB20; text-decoration: none; font-weight: 700; }
   .footer a:hover { text-decoration: underline; }
+  .topnav { display: flex; justify-content: flex-start; margin-bottom: 24px; }
+  .topnav a {
+    font-size: 13px; font-weight: 700; color: #A8A8A8; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 999px; border: 1px solid #2A2A2A;
+    transition: color 150ms, border-color 150ms;
+  }
+  .topnav a:hover { color: #F7AB20; border-color: rgba(247,171,32,0.45); }
 </style>
 </head>
 <body>
 <div class="wrap">
+  <div class="topnav"><a href="../">← All prototypes</a></div>
   <div class="head">
     <div class="logo">J</div>
     <div class="eyebrow">Stage 4 — Call Intelligence</div>
@@ -121,7 +130,7 @@
 
   <div class="footer">
     Voice via Sarvam AI TTS (Anushka for Jia, Vidya for Ananya, Abhilash for Rohit). All flows are scripted.<br/>
-    Other stages: <a href="../onboarding/">Stage 1 — Onboarding</a> · <a href="../">Stage 2 — AI Companion</a> · <a href="../call-on-behalf/">Stage 3 — Call on my behalf</a>
+    Other stages: <a href="../onboarding/">Stage 1 — Onboarding</a> · <a href="../ai-companion/">Stage 2 — AI Companion</a> · <a href="../call-on-behalf/">Stage 3 — Call on my behalf</a>
   </div>
 </div>
 </body>
