@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Jia — Call Intelligence · Known caller (MyJio)</title>
+<title>Jia — Call Intelligence · Unknown caller (MyJio)</title>
 <style>
   @font-face { font-family: 'JioType'; font-weight: 500; font-style: normal; font-display: swap;
     src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
@@ -128,11 +128,10 @@ const USER_NAME   = 'Shreya';
 
 const genId = () => Math.random().toString(36).slice(2, 9);
 
-// ── Pre-generated Sarvam audio (Anushka = Jia, Vidya = Ananya) ──
+// ── Pre-generated Sarvam audio (Anushka = Jia, Abhilash = Rohit) ──
 const AUDIO_CACHE = {};
 const AUDIO_CLIPS = [
-  'phone_ring',
-  'ci_jia_answer', 'ci_ananya_intro', 'ci_jia_ack', 'ci_ananya_bye', 'ci_jia_bye',
+  'ci2_jia_screen', 'ci2_rohit_intro', 'ci2_jia_probe', 'ci2_rohit_more', 'ci2_jia_decline',
 ];
 function preloadAudio() {
   AUDIO_CLIPS.forEach(name => {
@@ -228,9 +227,38 @@ function DynamicIsland({ expanded, dropped, timer, onClick }) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// INCOMING CALL SCREEN — phone rings, user has 5 rings to answer.
+// LOCK SCREEN — phone is idle, Jia silently intercepts the call (no ring).
+// User sees a notification slide down from the top.
 // ─────────────────────────────────────────────────────────────────
-const ANANYA = { name: 'Ananya', sub: 'Friends · Mobile', initial: 'A', accent: '#7C3AED' };
+const ANANYA = { name: 'Rohit · Unknown', sub: '+91 98… · No saved contact', initial: '?', accent: '#1F4FD0' };
+const CALLER = { name: 'Rohit', label: 'Unknown caller', phone: '+91 98765 43210', initial: 'R', accent: '#1F4FD0' };
+
+function LockScreen({ statusTime }) {
+  const now = new Date();
+  const day = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][now.getDay()];
+  const date = now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  return (
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column',
+      background: 'radial-gradient(ellipse at top, #14141A 0%, #050505 80%)',
+      color: '#fff', position: 'relative',
+    }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.65)', letterSpacing: '0.04em' }}>{date}</div>
+        <div style={{ fontSize: 88, fontWeight: 200, color: '#fff', lineHeight: 1, marginTop: 6, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums' }}>{statusTime}</div>
+        <div style={{ marginTop: 30, opacity: 0.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="16" height="22" viewBox="0 0 16 22" fill="none" stroke="#fff" strokeWidth="1.5">
+            <rect x="2" y="9" width="12" height="11" rx="2"/>
+            <path d="M5 9V6a3 3 0 0 1 6 0v3"/>
+          </svg>
+        </div>
+      </div>
+      <div style={{ flexShrink: 0, textAlign: 'center', padding: '16px 0 26px', color: 'rgba(255,255,255,0.5)', fontSize: 12, letterSpacing: '0.02em' }}>
+        Swipe up to unlock
+      </div>
+    </div>
+  );
+}
 
 function IncomingCallScreen({ onAccept, onDecline, ringCount, totalRings = 5 }) {
   return (
@@ -458,8 +486,8 @@ function CallScreen({ orbState, micGlow, callTimer, onMicTap, onEnd }) {
       color: '#fff', paddingTop: 8,
     }}>
       <div style={{ padding: '12px 32px 0', textAlign: 'center', flexShrink: 0 }}>
-        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', color: GOLD, textTransform: 'uppercase' }}>Jia is handling</div>
-        <div style={{ marginTop: 4, fontSize: 28, fontWeight: 500, letterSpacing: '-0.01em', color: '#fff' }}>Ananya</div>
+        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', color: GOLD, textTransform: 'uppercase' }}>Jia is screening</div>
+        <div style={{ marginTop: 4, fontSize: 22, fontWeight: 500, letterSpacing: '-0.01em', color: '#fff' }}>Unknown · +91 98765 43210</div>
         <div style={{ marginTop: 6, fontSize: 16, color: 'rgba(255,255,255,0.65)', fontWeight: 400, fontVariantNumeric: 'tabular-nums', minHeight: 20 }}>{callTimer}</div>
       </div>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: 20 }}>
@@ -509,7 +537,6 @@ function JiaAvatar({ size = 28 }) {
   );
 }
 
-// MyJio-app branded header (replaces the RCS header in this variant)
 function MyJioLogo({ size = 36 }) {
   return (
     <div style={{
@@ -555,7 +582,7 @@ function RcsHeader({ onBack, callActive }) {
             width: 7, height: 7, borderRadius: 999, background: '#E6262A', display: 'inline-block',
             animation: 'mic-glow 1.4s ease-in-out infinite',
           }}/>
-          {callActive ? 'Live · Jia is on a call for you' : 'Recent calls · Jia'}
+          {callActive ? 'Live · Jia is screening this call' : 'Recent calls · Jia'}
         </div>
       </div>
       <button aria-label="More" style={{
@@ -804,16 +831,16 @@ const ICON = {
   user: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>,
 };
 
-// ── Scenarios for RCS chip interaction (call-intelligence) ──
+// ── Scenarios for RCS chip interaction (Stage 4B · unknown caller) ──
 const SCENARIOS = [
   {
     match: /^listen in/i,
     reply: () => [
-      { kind: 'system-msg', text: "🎧 You're listening in — Jia and Ananya can't hear you." },
+      { kind: 'system-msg', text: "🎧 You're listening in — Rohit can't hear you." },
     ],
   },
   {
-    match: /^join the call|^join$/i,
+    match: /^take the call|^join$/i,
     reply: () => [
       { kind: 'join-call' },
     ],
@@ -821,21 +848,21 @@ const SCENARIOS = [
   {
     match: /^decline$/i,
     reply: () => [
-      { kind: 'decline-call' },
+      { kind: 'mark-decline' },
     ],
   },
   {
-    match: /^(reply to ananya|reply)/i,
-    reply: () => [
-      { kind: 'typing', ms: 500 },
-      { kind: 'text', text: "Sure — what would you like to send to Ananya?" },
-    ],
-  },
-  {
-    match: /^(add to calendar)/i,
+    match: /^(block number)/i,
     reply: () => [
       { kind: 'typing', ms: 400 },
-      { kind: 'text', text: "Added — Ananya's birthday dinner, Tonight 6 PM at The Table, Colaba 🎉" },
+      { kind: 'text', text: "Blocked +91 98765 43210. Future calls from this number will go to voicemail automatically." },
+    ],
+  },
+  {
+    match: /^(report as spam)/i,
+    reply: () => [
+      { kind: 'typing', ms: 400 },
+      { kind: 'text', text: "Reported. This number is now flagged across the Jio network as a sales caller — others will be warned too." },
     ],
   },
   {
@@ -1057,16 +1084,16 @@ function RcsScreen({ messages, typing, input, onInputChange, onSubmit, onChip, o
                       ? <JiaAvatar size={28}/>
                       : <div style={{
                           width: 28, height: 28, borderRadius: 999,
-                          background: `linear-gradient(145deg, #b08bff, ${ANANYA.accent} 70%)`,
+                          background: `linear-gradient(145deg, #6E91F0, ${ANANYA.accent} 70%)`,
                           color: '#fff', fontWeight: 900, fontSize: 13, letterSpacing: '-0.02em',
                           display: 'grid', placeItems: 'center',
                         }}>{ANANYA.initial}</div>
                     }
                   </div>
                   <div style={{
-                    background: m.role === 'jia' ? '#fff' : '#EFE6FF',
+                    background: m.role === 'jia' ? '#fff' : '#EBF1FF',
                     color: '#0E0E10',
-                    border: m.role === 'jia' ? '1px solid #E6E6E9' : '1px solid #D5C2F7',
+                    border: m.role === 'jia' ? '1px solid #E6E6E9' : '1px solid #C2D5F8',
                     borderRadius: m.role === 'jia' ? '18px 18px 18px 6px' : '18px 18px 6px 18px',
                     padding: '10px 14px',
                     fontSize: 14, lineHeight: 1.4, letterSpacing: '-0.005em',
@@ -1076,7 +1103,7 @@ function RcsScreen({ messages, typing, input, onInputChange, onSubmit, onChip, o
                     <div style={{
                       fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
                       color: m.role === 'jia' ? GOLD : ANANYA.accent, marginBottom: 3,
-                    }}>{m.role === 'jia' ? 'Jia' : 'Ananya'}</div>
+                    }}>{m.role === 'jia' ? 'Jia' : 'Rohit · Unknown'}</div>
                     {m.text}
                   </div>
                 </div>
@@ -1124,26 +1151,27 @@ function RcsScreen({ messages, typing, input, onInputChange, onSubmit, onChip, o
 }
 
 // ─────────────────────────────────────────────────────────────────
-// CONVERSATION SCRIPT — Stage 4A · Known caller
+// CONVERSATION SCRIPT — Stage 4B · Unknown caller
 // ─────────────────────────────────────────────────────────────────
-// Phone rings 5x; if user doesn't pick up, Jia auto-answers and
-// handles the call. Each 'turn' plays audio + adds a transcript bubble
-// in the live RCS thread.
+// Unknown number calls. Jia intercepts BEFORE the phone rings. User
+// sees a notification at the top, taps it, watches the live transcript,
+// reads enough to know it's a sales call, then taps Decline.
 const CALL_SCRIPT = [
   ['notify-rcs'],   // RCS notification + initial system bubble
-  ['turn', 'jia',    'ci_jia_answer',   "Hi! This is Jia, Shreya's AI assistant. Shreya is busy right now and couldn't pick up. May I know who's calling and what this is about?"],
-  ['turn', 'ananya', 'ci_ananya_intro', "Hi Jia! It's Ananya, Shreya's friend. I'm calling to invite her to my birthday dinner tonight at 6 PM at The Table in Colaba. Could you pass that on?"],
-  ['turn', 'jia',    'ci_jia_ack',      "Of course, Ananya. I'll let Shreya know about your birthday dinner — tonight, 6 PM, The Table, Colaba. Anything else you'd like me to add?"],
-  ['turn', 'ananya', 'ci_ananya_bye',   "No, that's all. Tell her I really hope she can make it. Thanks, Jia!"],
-  ['turn', 'jia',    'ci_jia_bye',      "Will do. Have a wonderful evening, Ananya. Bye!"],
-  ['summary'],      // call ends, summary card pushed into RCS
+  ['turn', 'jia',    'ci2_jia_screen',  "Hello, this is Shreya's AI assistant. Shreya can't take calls right now. May I know who's calling and what this is regarding?"],
+  ['turn', 'ananya', 'ci2_rohit_intro', "Good morning ma'am! This is Rohit calling from HDFC Bank. We have a special pre-approved offer on our Diners Club credit card for Shreya — lifetime free, with 5x reward points. May I take 2 minutes of her time?"],
+  ['turn', 'jia',    'ci2_jia_probe',   "Got it, Rohit. A pre-approved credit card offer from HDFC. Shreya is busy right now, but I can pass on the message. Could you share the offer details so I can relay them?"],
+  ['turn', 'ananya', 'ci2_rohit_more',  "Of course! The card has a ₹2,500 joining fee waived for the first year, 4 reward points per ₹150 spent, and complimentary airport lounge access. Would 6 PM today work for a callback?"],
+  ['await-decline'], // pause: wait for user to tap Decline. If user does nothing for 8s, auto-decline.
+  ['turn', 'jia',    'ci2_jia_decline', "Thanks for the details, Rohit. Shreya isn't interested in this offer. Please remove her number from your call list. Have a good day."],
+  ['summary'],
 ];
 
 const INITIAL_RCS = [
   { id: 'r1', role: 'system', kind: 'system',
-    text: "Jia auto-answered an incoming call from Ananya · just now" },
+    text: "Jia screened an unknown call · " + CALLER.phone },
   { id: 'r2', role: 'system', kind: 'chips',
-    chips: ['Listen in', 'Join the call', 'Decline'] },
+    chips: ['Listen in', 'Take the call', 'Decline'] },
 ];
 
 // ─────────────────────────────────────────────────────────────────
@@ -1151,8 +1179,8 @@ const INITIAL_RCS = [
 // ─────────────────────────────────────────────────────────────────
 function App() {
   useFitToViewport();
-  const [phase, setPhase]         = useState('incoming');   // 'incoming' | 'connecting' | 'call' | 'pip' | 'ended' | 'user-on-call'
-  const [ringCount, setRingCount] = useState(0);             // 0..5 — auto-answer when 5
+  const [phase, setPhase]         = useState('idle');        // 'idle' (lock screen) | 'call' | 'pip' | 'ended'
+  const [ringCount, setRingCount] = useState(0);             // unused in 4B (no rings) but kept for shared scaffolding
   const [orbState, setOrbState]   = useState('idle');
   const [micGlow, setMicGlow]     = useState(false);
   const [scriptIdx, setScriptIdx] = useState(0);
@@ -1213,7 +1241,7 @@ function App() {
   // Show the RCS notification banner during the call.
   // Stays visible until user taps it or the call ends.
   const showRcsNotification = useCallback(() => {
-    setNotification({ title: 'MyJio · Live call transcript', body: 'Tap to listen in, join, or decline 👇' });
+    setNotification({ title: 'MyJio · Screening unknown caller', body: '+91 98765 43210 · tap to view transcript 👇' });
   }, []);
 
   const advanceCallRef = useRef(null);
@@ -1250,6 +1278,29 @@ function App() {
       if (phaseRef.current !== 'ended') advanceCall(idx + 1);
       return;
     }
+    if (type === 'await-decline') {
+      // Pause the script. Wait up to 8s for the user to tap Decline.
+      // If they do, userDeclinedRef flips to true and we proceed.
+      // If they don't, auto-trigger decline so the demo always lands.
+      const start = Date.now();
+      while (!userDeclinedRef.current && (Date.now() - start) < 8000) {
+        if (phaseRef.current === 'ended') return;
+        await sleep(120);
+      }
+      if (!userDeclinedRef.current) {
+        // Auto-decline so the demo flows
+        setUserDeclined(true);
+      }
+      // Push a system bubble + a faint "you declined" indicator
+      setRcsMessages(prev => [...prev, {
+        id: genId(), role: 'system', kind: 'system',
+        text: "🚫 You declined the call · Jia will close it politely",
+      }]);
+      setScriptIdx(idx + 1);
+      await sleep(500);
+      if (phaseRef.current !== 'ended') advanceCall(idx + 1);
+      return;
+    }
     if (type === 'summary') {
       // Call ends, push summary card to RCS, drop the call
       setOrbState('idle');
@@ -1258,11 +1309,10 @@ function App() {
       await sleep(700);
       setRcsMessages(prev => [...prev, {
         id: genId(), role: 'system', kind: 'summary',
-        title: "Call summary · Ananya",
-        body: "Birthday dinner invite — tonight, 6 PM, The Table, Colaba.",
-        chips: ['Reply to Ananya', 'Add to calendar', 'Mark as done'],
+        title: "Sales call · HDFC Bank",
+        body: "Pre-approved Diners Club credit card pitch from Rohit. You declined — this number is now flagged as sales/spam, future calls will be auto-blocked.",
+        chips: ['Block number', 'Report as spam', 'Mark as done'],
       }]);
-      // Mark call dropped + show ended pill briefly
       setCallDropped(true);
       setShowEndedPill(true);
       if (timerRef.current) clearInterval(timerRef.current);
@@ -1273,49 +1323,35 @@ function App() {
   }, [pushInitialRcs, showRcsNotification]);
   advanceCallRef.current = advanceCall;
 
-  const stopRing = useCallback(() => {
-    const r = AUDIO_CACHE['phone_ring'];
-    if (r) { try { r.pause(); r.currentTime = 0; } catch(_) {} }
-  }, []);
+  // Helper: stop the ring tone audio.
+  // Track whether user manually declined (drives await-decline script branch)
+  const [userDeclined, setUserDeclined] = useState(false);
+  const userDeclinedRef = useRef(false);
+  useEffect(() => { userDeclinedRef.current = userDeclined; }, [userDeclined]);
 
-  // Ring loop: phone rings 5 times. After 5th ring, Jia auto-answers.
+  // Idle → screening transition: phone is on lock screen for 1.8s, then Jia
+  // intercepts the call (no ring at all, this is the whole point of 4B).
   useEffect(() => {
-    if (phase !== 'incoming') { stopRing(); return; }
-    if (ringCount >= 5) {
-      stopRing();
+    if (phase !== 'idle') return;
+    const t = setTimeout(() => {
       try {
-        const warm = AUDIO_CACHE['ci_jia_answer'];
+        const warm = AUDIO_CACHE['ci2_jia_screen'];
         if (warm) { warm.muted = true; warm.play().then(() => { warm.pause(); warm.muted = false; warm.currentTime = 0; }).catch(()=>{}); }
       } catch(_) {}
-      setPhase('connecting');
-      setTimeout(() => {
-        setPhase('call');
-        callStartRef.current = Date.now();
-        setRcsMessages([]); setOverlay(null);
-        setCallDropped(false); setShowEndedPill(false);
-        setNotification(null);
-        advanceCallRef.current(0);
-      }, 1200);
-      return;
-    }
-    try {
-      const r = AUDIO_CACHE['phone_ring'];
-      if (r) { r.currentTime = 0; r.play().catch(()=>{}); }
-    } catch(_) {}
-    const t = setTimeout(() => setRingCount(c => c + 1), 1300);
+      setPhase('call');
+      callStartRef.current = Date.now();
+      setRcsMessages([]); setOverlay(null);
+      setCallDropped(false); setShowEndedPill(false);
+      setNotification(null);
+      setUserDeclined(false);
+      advanceCallRef.current(0);
+    }, 1800);
     return () => clearTimeout(t);
-  }, [phase, ringCount, stopRing]);
+  }, [phase]);
 
-  const acceptIncomingCall = useCallback(() => {
-    stopRing();
-    setPhase('user-on-call');
-    callStartRef.current = Date.now();
-  }, [stopRing]);
-
-  const declineIncomingCall = useCallback(() => {
-    stopRing();
-    setPhase('ended');
-  }, [stopRing]);
+  // Stubs kept so existing App handlers don't blow up (the lock screen has no buttons)
+  const acceptIncomingCall = useCallback(() => {}, []);
+  const declineIncomingCall = useCallback(() => {}, []);
 
   const onMicTap = useCallback(() => {
     if (!waitingUser) return;
@@ -1347,7 +1383,8 @@ function App() {
     setCallDropped(false); setShowEndedPill(false);
     setNotification(null);
     setRingCount(0);
-    setPhase('incoming');
+    setUserDeclined(false);
+    setPhase('idle');
   };
 
   // RCS chip / composer interaction
@@ -1381,6 +1418,11 @@ function App() {
         setTimeout(() => setShowEndedPill(false), 3000);
         continue;
       }
+      if (item.kind === 'mark-decline') {
+        // Just flag user as declined — script awaiter will pick it up + play Jia's polite decline.
+        setUserDeclined(true);
+        continue;
+      }
       setRcsMessages(prev => [...prev, { ...item, role: 'assistant', id: genId() }]);
       await sleep(280);
     }
@@ -1409,7 +1451,7 @@ function App() {
 
       {/* Render phase content */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
-        {phase === 'incoming' && <IncomingCallScreen onAccept={acceptIncomingCall} onDecline={declineIncomingCall} ringCount={ringCount}/>}
+        {phase === 'idle' && <LockScreen statusTime={statusTime}/>}
         {phase === 'user-on-call' && (
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column',
@@ -1417,8 +1459,8 @@ function App() {
             color: '#fff', textAlign: 'center', padding: 32,
             background: 'radial-gradient(ellipse at top, #0a0a0c 0%, #050505 80%)',
           }}>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#F2F2F2' }}>You picked up</div>
-            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', maxWidth: 260 }}>You're now on the call with Ananya. Jia stayed in the background.</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: '#F2F2F2' }}>You took the call</div>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', maxWidth: 260 }}>You're now on the call with Rohit. Jia handed it over.</div>
             <button onClick={() => setPhase('ended')} style={{
               marginTop: 20, width: 70, height: 70, borderRadius: '50%', background: '#FF3B30', border: 'none',
               cursor: 'pointer', display: 'grid', placeItems: 'center', boxShadow: '0 6px 20px rgba(255,59,48,0.4)',

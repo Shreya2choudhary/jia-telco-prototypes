@@ -131,6 +131,7 @@ const genId = () => Math.random().toString(36).slice(2, 9);
 // ── Pre-generated Sarvam audio (Anushka = Jia, Vidya = Ananya) ──
 const AUDIO_CACHE = {};
 const AUDIO_CLIPS = [
+  'phone_ring',
   'ci_jia_answer', 'ci_ananya_intro', 'ci_jia_ack', 'ci_ananya_bye', 'ci_jia_bye',
 ];
 function preloadAudio() {
@@ -1239,12 +1240,18 @@ function App() {
   }, [pushInitialRcs, showRcsNotification]);
   advanceCallRef.current = advanceCall;
 
+  // Helper: stop the ring tone audio.
+  const stopRing = useCallback(() => {
+    const r = AUDIO_CACHE['phone_ring'];
+    if (r) { try { r.pause(); r.currentTime = 0; } catch(_) {} }
+  }, []);
+
   // Ring loop: phone rings 5 times. After 5th ring, Jia auto-answers.
   // User can tap Accept (takes the call themselves) or Decline at any time.
   useEffect(() => {
-    if (phase !== 'incoming') return;
+    if (phase !== 'incoming') { stopRing(); return; }
     if (ringCount >= 5) {
-      // Auto-answer
+      stopRing();
       // Warm up audio playback (gesture-bound is bypassed if cached)
       try {
         const warm = AUDIO_CACHE['ci_jia_answer'];
@@ -1261,19 +1268,25 @@ function App() {
       }, 1200);
       return;
     }
-    const t = setTimeout(() => setRingCount(c => c + 1), 900);
+    // Play one phone ring per tick
+    try {
+      const r = AUDIO_CACHE['phone_ring'];
+      if (r) { r.currentTime = 0; r.play().catch(()=>{}); }
+    } catch(_) {}
+    const t = setTimeout(() => setRingCount(c => c + 1), 1300);
     return () => clearTimeout(t);
-  }, [phase, ringCount]);
+  }, [phase, ringCount, stopRing]);
 
   const acceptIncomingCall = useCallback(() => {
-    // User answers before Jia auto-answers
+    stopRing();
     setPhase('user-on-call');
     callStartRef.current = Date.now();
-  }, []);
+  }, [stopRing]);
 
   const declineIncomingCall = useCallback(() => {
+    stopRing();
     setPhase('ended');
-  }, []);
+  }, [stopRing]);
 
   const onMicTap = useCallback(() => {
     if (!waitingUser) return;

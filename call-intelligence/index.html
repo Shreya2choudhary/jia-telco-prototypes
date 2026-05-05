@@ -100,24 +100,27 @@
     </a>
   </div>
 
-  <div class="section-label"><span>4B · Unknown caller — defined later</span></div>
+  <div class="section-label"><span>4B · Unknown caller — Jia screens before the phone rings</span></div>
+  <div class="scenario">
+    <b>Scenario:</b> An unknown number calls — Rohit from HDFC Bank pitching a pre-approved credit card. Phone <b>never rings</b>; Jia intercepts at the network and answers directly. A notification slides down silently with a live transcript. The user reads two exchanges, recognises it as a sales call, taps <b>Decline</b>. Jia closes politely, summary card flags the number as spam.
+  </div>
   <div class="grid">
-    <div class="card placeholder">
-      <div class="num">4B.1 · Coming soon</div>
-      <h2>Unknown caller flow</h2>
-      <p>Untrusted number calls. Jia screens it before the phone even rings, decides if it's worth your attention, and either patches it through, takes a message, or blocks it.</p>
-      <div class="cta">To be defined →</div>
-    </div>
-    <div class="card placeholder">
-      <div class="num">4B.2 · Coming soon</div>
-      <h2>Unknown caller — surface TBD</h2>
-      <p>Same scenario, alternative surface (RCS, MyJio, or a new channel — pending design.)</p>
-      <div class="cta">To be defined →</div>
-    </div>
+    <a class="card" href="unknown-caller-rcs.html">
+      <div class="num">4B.1 · Screen + RCS</div>
+      <h2>RCS notification</h2>
+      <p>Notification banner appears at the top of the lock screen. Tap it to open the live RCS transcript — Jia and Rohit's bubbles streaming, with three chips: <b>Listen in</b>, <b>Take the call</b>, or <b>Decline</b>.</p>
+      <div class="cta">Open prototype →</div>
+    </a>
+    <a class="card" href="unknown-caller-myjio.html">
+      <div class="num">4B.2 · Screen + MyJio</div>
+      <h2>MyJio in-call panel</h2>
+      <p>Same flow surfaced in the MyJio app — light theme transcript, MyJio header, branded summary card with "Block number" and "Report as spam" actions.</p>
+      <div class="cta">Open prototype →</div>
+    </a>
   </div>
 
   <div class="footer">
-    Voice via Sarvam AI TTS (Anushka for Jia, Vidya for Ananya). All flows are scripted.<br/>
+    Voice via Sarvam AI TTS (Anushka for Jia, Vidya for Ananya, Abhilash for Rohit). All flows are scripted.<br/>
     Other stages: <a href="../onboarding/">Stage 1 — Onboarding</a> · <a href="../">Stage 2 — AI Companion</a> · <a href="../call-on-behalf/">Stage 3 — Call on my behalf</a>
   </div>
 </div>
