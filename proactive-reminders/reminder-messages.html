@@ -90,6 +90,15 @@
   .task-rich-actions button:hover { background: rgba(255,255,255,0.05); border-color: #F7AB20; }
   .task-rich-actions button.danger { color: #FF6B6B; border-color: rgba(255,107,107,0.3); }
   .task-rich-actions button.danger:hover { background: rgba(255,107,107,0.08); border-color: #FF6B6B; }
+  /* Collapsed mode: when delivery has started, the setup card folds down
+     to a single row (icon + name + chevron) so it gets out of the way of
+     the actual reminder card. Click to expand again. */
+  .task-rich.collapsed { padding: 10px 12px; }
+  .task-rich.collapsed .task-rich-meta,
+  .task-rich.collapsed .task-rich-includes,
+  .task-rich.collapsed .task-rich-actions { display: none; }
+  .task-rich.collapsed .task-rich-head { cursor: pointer; }
+  .task-rich-chev { color: #6E6E6E; font-size: 14px; padding: 0 4px; flex-shrink: 0; }
 
   /* Edit sheet (slides up from bottom of device) */
   .edit-sheet-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.65);
@@ -253,6 +262,7 @@ function App() {
   const [editOpen, setEditOpen] = useState(false);
   const [editDraft, setEditDraft] = useState(null);
   const [taskDeleted, setTaskDeleted] = useState(false);
+  const [taskCollapsed, setTaskCollapsed] = useState(false);
 
   function openEdit() { setEditDraft({ ...taskData }); setEditOpen(true); }
   function saveEdit() {
@@ -277,14 +287,17 @@ function App() {
     const scrollToBottom = () => {
       const el = threadRef.current;
       if (!el) return;
-      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+      // Instant (not smooth) so rapid back-to-back appends don't keep
+      // cancelling each other's animation. We want the last paint to
+      // always end at the very bottom.
+      el.scrollTop = el.scrollHeight;
     };
-    // Immediate after layout flushes...
     requestAnimationFrame(scrollToBottom);
-    // ...and again after the reminder card's pop-in animation has played
-    // out (600ms), so we account for any late layout from the card growing in.
-    const t = setTimeout(scrollToBottom, 700);
-    return () => clearTimeout(t);
+    // Re-fire after the reminder-card's pop-in animation (600ms) so we
+    // catch any late layout shift from it growing in.
+    const t1 = setTimeout(scrollToBottom, 250);
+    const t2 = setTimeout(scrollToBottom, 800);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [messages, typing]);
 
   // Chip gate — flow pauses on 'await-chip' until user taps a chip.
@@ -326,6 +339,7 @@ function App() {
 
   function triggerDelivery() {
     setPhase('delivering');
+    setTaskCollapsed(true); // fold the setup card so the live reminder gets the spotlight
     runFlow(DELIVERY_FLOW, 'delivered');
   }
 
@@ -406,16 +420,19 @@ function App() {
             if (m.t === 'task') {
               if (taskDeleted) return null;
               return (
-                <div key={m.id} className={`task-rich ${taskOn ? '' : 'off'}`}>
-                  <div className="task-rich-head">
+                <div key={m.id} className={`task-rich ${taskOn ? '' : 'off'} ${taskCollapsed ? 'collapsed' : ''}`}>
+                  <div className="task-rich-head"
+                    onClick={taskCollapsed ? () => setTaskCollapsed(false) : undefined}>
                     <div className="task-rich-icon">💊</div>
                     <div className="task-rich-info">
-                      <div className="label">Reminder</div>
+                      <div className="label">{taskCollapsed ? `Reminder · ${taskData.time} · ${taskData.cadence}` : 'Reminder'}</div>
                       <div className="name">{taskData.title}</div>
                     </div>
-                    <button className="task-toggle" role="switch" aria-checked={taskOn} onClick={toggleTask}>
-                      <span className="thumb"/>
-                    </button>
+                    {taskCollapsed
+                      ? <span className="task-rich-chev">▾</span>
+                      : <button className="task-toggle" role="switch" aria-checked={taskOn} onClick={toggleTask}>
+                          <span className="thumb"/>
+                        </button>}
                   </div>
                   <div className="task-rich-meta">
                     <div className="task-rich-row"><div className="k">Time</div><div className="v">{taskData.time}</div></div>
