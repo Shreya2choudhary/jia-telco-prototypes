@@ -200,11 +200,17 @@ function stopAudio() { if (CURRENT) { try { CURRENT.pause(); CURRENT.currentTime
 
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 
-// Conversation script — runs AFTER user taps the notification & Jia joins.
+// Conversation splits into two halves around the moment Jia joins.
+// PRE-JIA plays automatically as soon as the call connects — Ananya and
+// Shreya start dinner planning while the "Add agent to call" notification
+// sits at the top, waiting to be tapped.
+const PRE_JIA_SCRIPT = [
+  { who: 'ananya', clip: 'at_ananya_open' },   // "are we still on for dinner tonight?"
+  { who: 'shreya', clip: 'at_shreya_yes' },    // "Yes, was thinking 7:30."
+];
+// POST-JIA plays after Jia is on the call (entry tone + announce).
 const POST_JIA_SCRIPT = [
-  { who: 'ananya', clip: 'at_ananya_open' },
-  { who: 'shreya', clip: 'at_shreya_yes' },
-  { who: 'shreya', clip: 'at_shreya_ask' },
+  { who: 'shreya', clip: 'at_shreya_ask' },    // "Hey Jia, what's the weather tonight?"
   { who: 'jia',    clip: 'at_jia_weather' },
   { who: 'ananya', clip: 'at_ananya_lock' },
   { who: 'shreya', clip: 'at_shreya_done' },
@@ -273,32 +279,63 @@ function App() {
     }
   }, [phase]);
 
-  function onAnswer() {
-    setPhase('call');
-    callStart.current = Date.now();
-    setCallTime('00:00');
-    // The notification appears automatically ~1.5 seconds after pickup
-    setTimeout(() => { if (!cancelRef.current) setNotif(true); }, 1500);
-  }
-  function onDecline() {
-    setPhase('ended');
+  // pendingTap is queued by the notification button; the running
+  // conversation loop picks it up at the next safe boundary.
+  const tappedRef = useRef(false);
+
+  function onTapNotif() {
+    tappedRef.current = true;
+    setNotif(false);
   }
 
-  async function onTapNotif() {
-    setNotif(false);
+  // Single async coordinator for the whole call:
+  //   pre-Jia conversation → wait for tap (or auto-tap fallback)
+  //   → entry tone + Jia announce → post-Jia → end
+  async function runCall() {
     cancelRef.current = false;
-    // Entry tone + announcement
+    tappedRef.current = false;
+
+    // Pre-Jia conversation plays automatically. Notification is up the
+    // whole time. Each turn checks tappedRef between turns so we can
+    // jump to the Jia-join sequence as soon as the user taps.
+    for (const turn of PRE_JIA_SCRIPT) {
+      if (cancelRef.current) return;
+      setActiveSpeaker(turn.who);
+      await playClip(turn.clip);
+      if (cancelRef.current) return;
+      setActiveSpeaker(null);
+      if (tappedRef.current) break;
+      await wait(380);
+    }
+
+    // If the user hasn't tapped yet, hold here until they do (or until
+    // we time out). The notification stays visible the whole time.
+    const waitStart = Date.now();
+    while (!tappedRef.current && (Date.now() - waitStart) < 12_000) {
+      if (cancelRef.current) return;
+      await wait(140);
+    }
+    if (!tappedRef.current) {
+      // Timeout fallback so the demo always lands.
+      tappedRef.current = true;
+      setNotif(false);
+    }
+
+    // Brief beat, then entry tone + system voice "AI assistant has joined"
+    await wait(250);
+    if (cancelRef.current) return;
     setActiveSpeaker(null);
     await playClip('at_entry_tone');
     if (cancelRef.current) return;
     setJiaOnCall(true);
-    await wait(150);
+    await wait(180);
     setActiveSpeaker('jia');
     await playClip('at_sys_announce');
     if (cancelRef.current) return;
     setActiveSpeaker(null);
-    await wait(400);
-    // Run the post-Jia conversation
+    await wait(450);
+
+    // Post-Jia conversation
     for (const turn of POST_JIA_SCRIPT) {
       if (cancelRef.current) return;
       setActiveSpeaker(turn.who);
@@ -308,9 +345,22 @@ function App() {
       await wait(380);
     }
     if (!cancelRef.current) {
-      await wait(400);
+      await wait(450);
       setPhase('ended');
     }
+  }
+
+  function onAnswer() {
+    setPhase('call');
+    callStart.current = Date.now();
+    setCallTime('00:00');
+    // Notification appears INSTANTLY on pickup and stays until the user
+    // taps it (or 12s timeout). Meanwhile the conversation auto-plays.
+    setNotif(true);
+    setTimeout(() => { if (!cancelRef.current) runCall(); }, 250);
+  }
+  function onDecline() {
+    setPhase('ended');
   }
 
   function endCall() {
@@ -320,6 +370,7 @@ function App() {
 
   function restart() {
     cancelRef.current = true; stopAudio();
+    tappedRef.current = false;
     setNotif(false); setJiaOnCall(false);
     setActiveSpeaker(null); setRingCount(0);
     setCallTime('00:00'); callStart.current = 0;
