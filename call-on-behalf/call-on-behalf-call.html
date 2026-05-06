@@ -195,7 +195,7 @@ function App() {
 
   // Phases: dialer → connecting → call → ended → messages-empty → messages-confirmed
   const [phase, setPhase] = useState('dialer');
-  const [dialed, setDialed] = useState('');
+  const [dialed, setDialed] = useState('#5555');
   const [activeSpeaker, setActiveSpeaker] = useState(null); // 'jia' | 'user' | null
   const [callTime, setCallTime] = useState('connecting…');
   const [statusTime] = useState(() => { const d = new Date(); return d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0'); });
@@ -270,7 +270,7 @@ function App() {
 
   function restart() {
     cancelRef.current = true; stopAudio();
-    setActiveSpeaker(null); setDialed(''); setConfirmShown(false); setThinking(false);
+    setActiveSpeaker(null); setDialed('#5555'); setConfirmShown(false); setThinking(false);
     callStart.current = 0; setCallTime('connecting…');
     setPhase('dialer');
   }
