@@ -228,33 +228,19 @@ function App() {
 
   useEffect(() => { runFlow(SETUP_FLOW, 'scheduled'); /* eslint-disable-next-line */ }, []);
 
-  function triggerMomCall() {
-    setPhase('mom-call');
-    setMomCallLines([]); setMomCallEnded(false);
-    setMessages(m => [...m,
-      { t: 'time', text: 'Tomorrow, 9:00 AM', id: Date.now() },
-      { t: 'jia',  text: "Calling your mum now to remind her about her BP medicines…", id: Date.now()+1 },
-    ]);
-    setTimeout(runMomCall, 700);
-  }
-
-  async function runMomCall() {
-    cancelRef.current = false;
-    await wait(700);
-    for (const turn of MOM_CALL_FLOW) {
-      if (cancelRef.current) return;
-      setMomCallLines(prev => [...prev, { who: turn.who, text: turn.text, id: Math.random() }]);
-      await playClip(turn.clip, turn.ms);
-      if (cancelRef.current) return;
-      await wait(220);
-    }
-    setMomCallEnded(true);
-    await wait(900);
+  // Trigger jumps straight from 'scheduled' → typing → Jia confirmation
+  // bubble + receipt card. Per the brief: in Messages we don't show the
+  // "calling your mum" live transcript — just the result.
+  async function triggerMomCall() {
+    setPhase('confirming');
+    setMessages(m => [...m, { t: 'time', text: 'Tomorrow, 9:01 AM', id: Date.now() }]);
     setThinking(true);
-    await wait(900);
+    await wait(1100);
     setThinking(false);
-    setMessages(m => [...m, { t: 'jia', text: "Done! She said: \"Oh thank you beta, I'll take them right now.\" 💛", id: Date.now() }]);
-    setMessages(m => [...m, { t: 'receipt', id: Date.now()+1 }]);
+    setMessages(m => [...m,
+      { t: 'jia', text: "Done — I called your mum and reminded her about her BP medicines. She said: \"Oh thank you beta, I'll take them right now.\" 💛", id: Date.now()+1 },
+      { t: 'receipt', id: Date.now()+2 },
+    ]);
     setPhase('confirmed');
   }
 
@@ -321,7 +307,7 @@ function App() {
                   </div>
                   <div className="meta">
                     <div className="row"><div className="k">When</div><div className="v">9:00 AM</div></div>
-                    <div className="row"><div className="k">Duration</div><div className="v">{momCallTimer}</div></div>
+                    <div className="row"><div className="k">Duration</div><div className="v">00:38</div></div>
                     <div className="row"><div className="k">Status</div><div className="v" style={{color:'#4ED65A'}}>Acknowledged</div></div>
                     <div className="row"><div className="k">Repeat</div><div className="v">Daily</div></div>
                   </div>
@@ -330,28 +316,6 @@ function App() {
             }
             return null;
           })}
-          {(phase === 'mom-call' || phase === 'confirmed') && (
-            <div className="call-card">
-              <div className="head">
-                <div className="who"><div className="av jia">J</div></div>
-                <span className="arrow">→</span>
-                <div className="who"><div className="av mom">M</div></div>
-                <div className="meta">
-                  <div className="tag">{momCallEnded ? 'Call ended' : <><span className="live-pip"/>Live</>}</div>
-                  <div className="timer">{momCallTimer}</div>
-                </div>
-              </div>
-              <div className="body">
-                {momCallLines.map(l => (
-                  <div key={l.id} className={`call-line ${l.who}`}>
-                    <span className="who">{l.who === 'jia' ? 'Jia' : 'Mum'}</span>
-                    <span className="text">"{l.text}"</span>
-                  </div>
-                ))}
-              </div>
-              {momCallEnded && (<div className="ended">✓ Reminder delivered · mum acknowledged</div>)}
-            </div>
-          )}
           {(typing || thinking) && (
             <div className="bubble-row jia">
               <div className="bubble-avatar"><div className="jia-avatar" style={{width:28,height:28,fontSize:12}}>J</div></div>

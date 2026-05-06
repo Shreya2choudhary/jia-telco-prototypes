@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Jia — Call on my behalf · Ask via Call</title>
 <style>
+  :root {
+    --gold: #F7AB20;
+    --gold-soft: #FFC86B;
+    --user-blue: #4FC1FF;
+  }
   @font-face { font-family: 'JioType'; font-weight: 500; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
   @font-face { font-family: 'JioType'; font-weight: 700; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
   @font-face { font-family: 'JioType'; font-weight: 900; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Black.woff2') format('woff2'); }
@@ -24,58 +29,70 @@
     display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px 7px 10px; border-radius: 999px;
     background: rgba(28,28,30,0.85); color: #F2F2F2; border: 1px solid rgba(255,255,255,0.18);
     font-size: 12px; font-weight: 700; text-decoration: none; backdrop-filter: blur(10px); }
+  .home-indicator { height: 30px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .home-indicator::before { content: ''; width: 134px; height: 5px; border-radius: 999px; background: rgba(255,255,255,0.6); }
 
-  /* Dialer screen */
-  .dialer { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
-    padding: 28px 24px; background: radial-gradient(ellipse at top, #1a1422 0%, #050505 80%); color: #fff; text-align: center; }
-  .dialer .av { width: 128px; height: 128px; border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #FFC86B, #F7AB20 60%, #b06f00 100%);
-    color: #0E0E10; font-weight: 900; font-size: 60px; display: grid; place-items: center;
-    box-shadow: 0 0 60px rgba(247,171,32,0.45); }
-  .dialer h2 { font-size: 28px; font-weight: 700; }
-  .dialer .num { font-size: 14px; color: rgba(255,255,255,0.55); }
-  .dialer .hint { font-size: 13px; color: rgba(255,255,255,0.45); max-width: 240px; line-height: 1.5; }
-  .dial-btn { width: 78px; height: 78px; border-radius: 50%; background: #2DD66A; border: none; cursor: pointer;
-    display: grid; place-items: center; box-shadow: 0 6px 24px rgba(45,214,106,0.45); animation: mic-glow 1.6s ease-in-out infinite; }
+  /* ── Dialer ────────────────────────────────────────────── */
+  .screen-dialer { flex: 1; display: flex; flex-direction: column; background: #000; padding: 0 0 16px; }
+  .dialer-display { flex: 0 0 auto; padding: 12px 24px 28px; display: flex; align-items: center; justify-content: center; min-height: 110px; }
+  .dialer-number { font-size: 44px; font-weight: 400; color: #fff; min-height: 56px; font-feature-settings: 'tnum'; }
+  .dialer-cursor { display: inline-block; width: 2px; height: 38px; background: var(--gold); margin-left: 4px; vertical-align: middle; animation: blink 1s step-end infinite; }
+  .dialer-grid { flex: 1; display: grid; grid-template-columns: repeat(3, 76px); grid-auto-rows: 76px; gap: 14px 30px; justify-content: center; align-content: center; padding: 0 24px; }
+  .dial-key { width: 76px; height: 76px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 50%;
+    background: rgba(255,255,255,0.18); color: #fff; border: none; cursor: pointer; transition: background 100ms; font-family: inherit; padding: 0; }
+  .dial-key:active { background: rgba(255,255,255,0.32); }
+  .dial-key .digit { font-size: 30px; font-weight: 400; line-height: 1; }
+  .dial-key .letters { font-size: 9px; font-weight: 600; letter-spacing: 0.18em; margin-top: 3px; color: #fff; }
+  .dial-key.symbol .digit { font-size: 32px; }
+  .dial-key.symbol .letters { visibility: hidden; }
+  .dialer-actions { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 4px 30px 0; }
+  .call-btn { width: 70px; height: 70px; border-radius: 50%; background: #2DD66A; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(45,214,106,0.4); grid-column: 2; transition: transform 150ms; }
+  .call-btn:active { transform: scale(0.95); }
+  .call-btn svg { width: 32px; height: 32px; fill: white; }
+  .delete-btn { grid-column: 3; justify-self: end; width: 36px; height: 36px; border: none; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #fff; opacity: 0.6; }
+  .delete-btn:disabled { opacity: 0; pointer-events: none; }
+  .delete-btn svg { width: 28px; height: 22px; }
+  .dialer-hint { text-align: center; color: #6E6E6E; font-size: 12px; padding: 12px 24px 4px; }
+  .dialer-hint .code { color: var(--gold); font-weight: 800; letter-spacing: 0.05em; }
 
-  /* Call screen */
-  .call-screen { flex: 1; display: flex; flex-direction: column;
-    background: radial-gradient(ellipse at top, #1a1422 0%, #050505 80%); color: #fff; padding: 8px 24px 22px; }
-  .top-meta { text-align: center; padding-top: 4px; flex-shrink: 0; }
-  .top-meta .label { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.55); letter-spacing: 0.14em; text-transform: uppercase; }
-  .timer { color: rgba(255,255,255,0.85); font-size: 15px; margin-top: 4px; font-variant-numeric: tabular-nums; }
-  .stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
-  .pair { display: flex; gap: 32px; align-items: flex-end; }
-  .person { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-  .person .name { font-size: 16px; font-weight: 700; color: #fff; }
-  .person .badge { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
-    padding: 2px 8px; border-radius: 999px;
-    background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.15); }
-  .person.speaking .badge { background: rgba(247,171,32,0.16); color: #F7AB20; border-color: rgba(247,171,32,0.5); }
-  .av-shreya { width: 96px; height: 96px; border-radius: 50%;
-    background: linear-gradient(145deg, #FFB1C8, #E91E63 70%);
-    color: #fff; font-weight: 900; font-size: 42px; display: grid; place-items: center;
-    box-shadow: 0 0 32px rgba(233,30,99,0.4); transition: box-shadow 200ms; }
-  .av-shreya.speaking { box-shadow: 0 0 56px rgba(233,30,99,0.85); animation: pulse-pink 1.4s ease-in-out infinite; }
-  .av-jia { width: 96px; height: 96px; border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #FFC86B, #F7AB20 60%, #b06f00 100%);
-    color: #0E0E10; font-weight: 900; font-size: 44px; display: grid; place-items: center;
-    box-shadow: 0 0 32px rgba(247,171,32,0.45); }
-  .av-jia.speaking { box-shadow: 0 0 60px rgba(247,171,32,0.85); animation: pulse-gold 1.0s ease-in-out infinite; }
-  .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 30px; padding: 8px 6px 4px; flex-shrink: 0; }
+  /* ── Call screen ──────────────────────────────────────── */
+  .screen-call { flex: 1; display: flex; flex-direction: column; background: radial-gradient(ellipse at top, #0a0a0c 0%, #050505 80%); color: #fff; padding-top: 8px; }
+  .call-header { padding: 12px 32px 0; text-align: center; flex-shrink: 0; }
+  .call-name { font-size: 28px; font-weight: 500; color: #fff; }
+  .call-state { margin-top: 6px; font-size: 16px; color: rgba(255,255,255,0.65); font-variant-numeric: tabular-nums; min-height: 20px; }
+  .orb-area { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; padding: 20px; }
+  .orb { position: relative; width: 220px; height: 220px; display: grid; place-items: center; }
+  .orb-ring { position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--gold-soft), var(--gold) 60%, #b06f00 100%);
+    box-shadow: 0 0 80px rgba(247,171,32,0.55), 0 0 160px rgba(247,171,32,0.3), inset 0 6px 30px rgba(255,220,150,0.6), inset 0 -6px 30px rgba(140,80,0,0.3);
+    transition: transform 800ms ease, box-shadow 800ms ease;
+    animation: orb-idle 4s ease-in-out infinite; }
+  .orb-letter { position: relative; z-index: 2; font-family: 'JioType', system-ui; font-weight: 900;
+    font-size: 96px; color: #0E0E10; letter-spacing: -0.04em; text-shadow: 0 2px 10px rgba(0,0,0,0.18); user-select: none; }
+  .pulse { position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(247,171,32,0.6); opacity: 0; pointer-events: none; }
+  .orb.speaking .pulse { animation: pulse-out 1.4s ease-out infinite; }
+  .orb.speaking .pulse:nth-child(2) { animation-delay: 0.45s; }
+  .orb.speaking .pulse:nth-child(3) { animation-delay: 0.9s; }
+  .orb.listening .orb-ring { background: radial-gradient(circle at 30% 30%, #aee0ff, var(--user-blue) 60%, #1a78b8 100%);
+    box-shadow: 0 0 80px rgba(79,193,255,0.55), 0 0 160px rgba(79,193,255,0.3), inset 0 6px 30px rgba(220,240,255,0.6), inset 0 -6px 30px rgba(20,80,140,0.3); }
+  .orb.listening .orb-letter { font-size: 72px; }
+  .orb.listening .pulse { border-color: rgba(79,193,255,0.6); animation: pulse-out 1.2s ease-out infinite; }
+  .orb.listening .pulse:nth-child(2) { animation-delay: 0.4s; }
+  .orb.listening .pulse:nth-child(3) { animation-delay: 0.8s; }
+  .actions { flex-shrink: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 36px; padding: 12px 32px 8px; }
   .action { display: flex; flex-direction: column; align-items: center; gap: 5px; background: none; border: none; color: #fff; cursor: pointer; font-family: inherit; }
   .action .icn { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.15); display: grid; place-items: center; transition: background 150ms; }
   .action.active .icn { background: #fff; color: #000; }
-  .action .lab { font-size: 11px; color: rgba(255,255,255,0.95); }
-  .end-row { display: flex; justify-content: center; padding: 6px 0 0; flex-shrink: 0; }
-  .end-btn { width: 64px; height: 64px; border-radius: 50%; background: #FF3B30; border: none; cursor: pointer;
-    display: grid; place-items: center; box-shadow: 0 6px 20px rgba(255,59,48,0.4); }
+  .action .lab { font-size: 11px; }
+  .end-row { display: flex; justify-content: center; padding: 8px 0 12px; flex-shrink: 0; }
+  .end-btn { width: 64px; height: 64px; border-radius: 50%; background: #FF3B30; border: none; cursor: pointer; display: grid; place-items: center; box-shadow: 0 6px 20px rgba(255,59,48,0.4); }
 
-  /* Messages screen for the post-call confirmation */
+  /* ── Messages thread (post-call confirmation) ────────── */
   .thread-screen { flex: 1; display: flex; flex-direction: column; background: #1A1A1C; overflow: hidden; }
   .thread-header { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: #1F1F22; border-bottom: 1px solid #2A2A2D; flex-shrink: 0; }
   .jia-avatar { width: 40px; height: 40px; border-radius: 50%;
-    background: linear-gradient(145deg, #FFC86B, #F7AB20); color: #0E0E10;
+    background: linear-gradient(145deg, var(--gold-soft), var(--gold)); color: #0E0E10;
     font-weight: 900; font-size: 18px; display: grid; place-items: center; flex-shrink: 0; }
   .thread-title .name { font-size: 16px; font-weight: 700; color: #fff; }
   .thread-title .sub { font-size: 12px; color: #A8A8A8; display: flex; align-items: center; gap: 5px; margin-top: 1px; }
@@ -85,42 +102,15 @@
   .time-divider { text-align: center; font-size: 11px; font-weight: 600; color: #6E6E6E; padding: 8px 0; letter-spacing: 0.04em; text-transform: uppercase; }
   .bubble-row { display: flex; gap: 6px; align-items: flex-end; max-width: 86%; animation: in 320ms cubic-bezier(0.4,0,0.2,1) both; }
   .bubble-row.jia { align-self: flex-start; }
-  .bubble-row.user { align-self: flex-end; flex-direction: row-reverse; }
   .bubble-avatar { width: 28px; flex-shrink: 0; }
   .bubble { padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.45; word-break: break-word; }
   .bubble.jia { background: #2A2A2C; color: #F2F2F2; border-radius: 18px 18px 18px 6px; }
-  .bubble.user { background: #5C2DD6; color: #fff; border-radius: 18px 18px 6px 18px; }
   .typing { padding: 8px 14px; background: #2A2A2C; border-radius: 18px 18px 18px 6px; display: inline-flex; gap: 4px; align-items: center; }
   .typing span { width: 6px; height: 6px; background: #888; border-radius: 50%; animation: bounce 1.4s infinite both; }
   .typing span:nth-child(2) { animation-delay: 0.15s; } .typing span:nth-child(3) { animation-delay: 0.3s; }
   .composer { padding: 10px 12px; background: #1F1F22; border-top: 1px solid #2A2A2D; flex-shrink: 0; }
   .composer-input { width: 100%; padding: 10px 14px; border-radius: 999px; background: #2A2A2C; border: none; color: #F2F2F2; font-size: 14px; outline: none; }
   .composer-input::placeholder { color: #6E6E6E; }
-
-  /* Live "Jia ↔ Mom" call card embedded in the chat */
-  .call-card { margin: 6px 0 6px 34px; max-width: 92%;
-    background: linear-gradient(180deg, rgba(247,171,32,0.10), #1F1F22);
-    border: 1.5px solid rgba(247,171,32,0.45); border-radius: 18px; overflow: hidden;
-    animation: in 320ms cubic-bezier(0.4,0,0.2,1) both; }
-  .call-card .head { padding: 12px 14px 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.06); }
-  .call-card .head .who { display: flex; align-items: center; gap: 6px; }
-  .call-card .head .av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 13px; }
-  .call-card .head .av.jia { background: linear-gradient(145deg, #FFC86B, #F7AB20); color: #0E0E10; }
-  .call-card .head .av.mom { background: linear-gradient(145deg, #FFD2A1, #C97B27 70%); color: #fff; font-size: 12px; }
-  .call-card .head .arrow { color: #6E6E6E; font-size: 14px; }
-  .call-card .head .meta { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-  .call-card .head .meta .tag { font-size: 9.5px; font-weight: 800; color: #F7AB20; letter-spacing: 0.1em; text-transform: uppercase; display: flex; align-items: center; gap: 5px; }
-  .call-card .head .meta .timer { font-size: 11px; color: #A8A8A8; font-variant-numeric: tabular-nums; }
-  .call-card .live-pip { width: 7px; height: 7px; border-radius: 50%; background: #FF3B30; animation: blink 1.0s ease-in-out infinite; }
-  .call-card .body { padding: 10px 14px 14px; display: flex; flex-direction: column; gap: 6px; }
-  .call-line { display: flex; gap: 8px; align-items: flex-start; animation: in 280ms cubic-bezier(0.4,0,0.2,1) both; }
-  .call-line .who { font-size: 10px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; flex-shrink: 0; padding-top: 2px; }
-  .call-line.jia .who { color: #F7AB20; }
-  .call-line.mom .who { color: #C97B27; }
-  .call-line .text { font-size: 13px; color: #E8E8EA; line-height: 1.4; flex: 1; }
-  .call-card .ended { padding: 8px 14px 12px; font-size: 11px; color: #4ED65A; font-weight: 700; display: flex; align-items: center; gap: 5px; border-top: 1px solid rgba(255,255,255,0.06); }
-
-  /* Receipt card */
   .receipt-card { margin: 6px 0 6px 34px; max-width: 92%;
     background: #1C1C1E; border: 1.5px solid rgba(78,214,90,0.35); border-radius: 18px;
     padding: 14px; animation: in 320ms cubic-bezier(0.4,0,0.2,1) both; }
@@ -132,20 +122,17 @@
   .receipt-card .meta .row { background: #0E0E10; border: 1px solid #2A2A2D; border-radius: 10px; padding: 8px 10px; }
   .receipt-card .meta .k { color: #A8A8A8; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
   .receipt-card .meta .v { color: #F2F2F2; font-size: 13px; font-weight: 700; margin-top: 1px; }
-
-  /* Skip-time pill (debug-y but keeps demo moving) */
   .skip-pill { position: absolute; top: 60px; right: 12px; z-index: 60;
     padding: 7px 12px 7px 10px; border-radius: 999px;
-    background: linear-gradient(145deg, #FFC86B, #F7AB20); color: #0E0E10;
+    background: linear-gradient(145deg, var(--gold-soft), var(--gold)); color: #0E0E10;
     border: none; font-size: 12px; font-weight: 800; cursor: pointer;
     box-shadow: 0 6px 20px rgba(247,171,32,0.35); display: inline-flex; align-items: center; gap: 4px; }
 
+  @keyframes blink { 50% { opacity: 0; } }
   @keyframes in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes bounce { 0%,60%,100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
-  @keyframes pulse-gold { 0%,100% { box-shadow: 0 0 56px rgba(247,171,32,0.85); } 50% { box-shadow: 0 0 80px rgba(247,171,32,0.4); } }
-  @keyframes pulse-pink { 0%,100% { box-shadow: 0 0 48px rgba(233,30,99,0.75); } 50% { box-shadow: 0 0 70px rgba(233,30,99,0.35); } }
-  @keyframes mic-glow { 0%,100% { box-shadow: 0 0 0 0 rgba(45,214,106,0.5); } 50% { box-shadow: 0 0 0 14px rgba(45,214,106,0); } }
-  @keyframes blink { 50% { opacity: 0.3; } }
+  @keyframes orb-idle { 0%,100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+  @keyframes pulse-out { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.55); opacity: 0; } }
 </style>
 </head>
 <body>
@@ -156,9 +143,8 @@
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
-// Audio cache. Clips that haven't been generated yet will gracefully no-op.
-const CLIPS = ['cob_jia_hello','cob_shreya_ask','cob_jia_confirm','cob_shreya_thanks','cob_jia_bye',
-  'cob_jia_to_mom','cob_mom_reply'];
+// Audio cache (graceful no-op if files missing — falls back to ms timing).
+const CLIPS = ['cob_jia_hello','cob_shreya_ask','cob_jia_confirm','cob_shreya_thanks','cob_jia_bye'];
 const CACHE = {};
 CLIPS.forEach(n => { try { const a = new Audio(`audio/${n}.wav`); a.preload = 'auto'; CACHE[n] = a; } catch(_){} });
 let CURRENT = null;
@@ -170,33 +156,32 @@ function playClip(name, fallbackMs) {
     CURRENT = a; a.currentTime = 0;
     let resolved = false;
     const done = () => { if (resolved) return; resolved = true; a.onended = a.onerror = null; resolve(); };
-    a.onended = done; a.onerror = () => { setTimeout(done, fallbackMs || 1400); };
-    const p = a.play();
-    if (p && p.catch) p.catch(() => setTimeout(done, fallbackMs || 1400));
-    // Hard fallback if metadata is bad: cap at fallbackMs * 1.4
+    a.onended = done; a.onerror = () => setTimeout(done, fallbackMs || 1400);
+    const p = a.play(); if (p && p.catch) p.catch(() => setTimeout(done, fallbackMs || 1400));
     setTimeout(() => { if (!resolved && a.paused) done(); }, (fallbackMs || 1400) * 2);
   });
 }
 function stopAudio() { if (CURRENT) { try { CURRENT.pause(); CURRENT.currentTime = 0; } catch(_){} CURRENT = null; } }
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 
-// Conversation Shreya ↔ Jia (the user's request to delegate the call).
-const JIA_CALL_FLOW = [
-  { who: 'jia',    clip: 'cob_jia_hello',    text: "Hi Shreya — how can I help?", ms: 1500 },
-  { who: 'shreya', clip: 'cob_shreya_ask',   text: "Hey Jia, can you call my mum and remind her to take her BP medicines at 9 AM?", ms: 4200 },
-  { who: 'jia',    clip: 'cob_jia_confirm',  text: "Of course — I'll call her at 9 AM and confirm with you here. Anything else?", ms: 3800 },
-  { who: 'shreya', clip: 'cob_shreya_thanks',text: "No, that's it. Thanks!", ms: 1500 },
-  { who: 'jia',    clip: 'cob_jia_bye',      text: "You're welcome — talk soon.", ms: 1500 },
+// Shreya↔Jia conversation. who: 'jia' | 'user' so the orb flips colour.
+const FLOW = [
+  { who: 'jia',  clip: 'cob_jia_hello',     ms: 1500 },
+  { who: 'user', clip: 'cob_shreya_ask',    ms: 4200 },
+  { who: 'jia',  clip: 'cob_jia_confirm',   ms: 3800 },
+  { who: 'user', clip: 'cob_shreya_thanks', ms: 1500 },
+  { who: 'jia',  clip: 'cob_jia_bye',       ms: 1500 },
 ];
 
-// Conversation Jia ↔ Mum (the actual delegated call, played back as a transcript card).
-const MOM_CALL_FLOW = [
-  { who: 'jia', clip: 'cob_jia_to_mom', text: "Hi Auntie, this is Jia, Shreya's AI assistant. Just a quick reminder to take your BP medicines now — Shreya wanted me to check in. Have a wonderful day!", ms: 5500 },
-  { who: 'mom', clip: 'cob_mom_reply',  text: "Oh, thank you beta — I'll take them right now.", ms: 2400 },
+const KEYS = [
+  ['1', ''], ['2', 'ABC'], ['3', 'DEF'],
+  ['4', 'GHI'], ['5', 'JKL'], ['6', 'MNO'],
+  ['7', 'PQRS'], ['8', 'TUV'], ['9', 'WXYZ'],
+  ['*', '', true], ['0', '+'], ['#', '', true],
 ];
 
 function App() {
-  // Auto-fit to viewport
+  // Auto-fit
   useEffect(() => {
     const fit = () => {
       const dev = document.querySelector('.device'); if (!dev) return;
@@ -208,26 +193,21 @@ function App() {
     return () => window.removeEventListener('resize', fit);
   }, []);
 
-  // Phases:
-  //   dialer → connecting → call (Shreya↔Jia) → call-ended → messages-empty
-  //   → (skip 9 AM) → messages-mom-call (live) → messages-confirmed
+  // Phases: dialer → connecting → call → ended → messages-empty → messages-confirmed
   const [phase, setPhase] = useState('dialer');
-  const [activeSpeaker, setActiveSpeaker] = useState(null);
-  const [callTime, setCallTime] = useState('00:00');
+  const [dialed, setDialed] = useState('');
+  const [activeSpeaker, setActiveSpeaker] = useState(null); // 'jia' | 'user' | null
+  const [callTime, setCallTime] = useState('connecting…');
   const [statusTime] = useState(() => { const d = new Date(); return d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0'); });
   const callStart = useRef(0);
   const cancelRef = useRef(false);
-  const [momCallLines, setMomCallLines] = useState([]);
-  const [momCallTimer, setMomCallTimer] = useState('00:00');
-  const [momCallEnded, setMomCallEnded] = useState(false);
-  const [confirmShown, setConfirmShown] = useState(false);
   const [thinking, setThinking] = useState(false);
+  const [confirmShown, setConfirmShown] = useState(false);
   const threadRef = useRef(null);
 
-  // Call timer for Shreya↔Jia call
+  // Call timer
   useEffect(() => {
-    if (phase !== 'call' && phase !== 'connecting') return;
-    if (phase === 'connecting') { setCallTime('connecting…'); return; }
+    if (phase !== 'call') return;
     if (!callStart.current) callStart.current = Date.now();
     const t = setInterval(() => {
       const s = Math.floor((Date.now() - callStart.current) / 1000);
@@ -237,35 +217,26 @@ function App() {
     return () => clearInterval(t);
   }, [phase]);
 
-  // Auto-scroll messages thread to bottom
+  // Auto-scroll
   useEffect(() => {
     if (!threadRef.current) return;
-    const el = threadRef.current;
-    el.scrollTop = el.scrollHeight;
-    const t = setTimeout(() => { if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight; }, 200);
-    return () => clearTimeout(t);
-  }, [momCallLines, confirmShown, thinking, phase]);
+    threadRef.current.scrollTop = threadRef.current.scrollHeight;
+  }, [thinking, confirmShown, phase]);
 
-  // Mom-call timer
-  useEffect(() => {
-    if (phase !== 'mom-call') return;
-    const start = Date.now();
-    const t = setInterval(() => {
-      const s = Math.floor((Date.now() - start) / 1000);
-      const m = Math.floor(s / 60), r = s % 60;
-      setMomCallTimer(String(m).padStart(2,'0') + ':' + String(r).padStart(2,'0'));
-    }, 500);
-    return () => clearInterval(t);
-  }, [phase]);
+  function pressKey(k) { if (dialed.length < 8) setDialed(d => d + k); }
+  function backspace() { setDialed(d => d.slice(0, -1)); }
 
   function startCall() {
+    // For demo: any non-empty number connects to Jia. Auto-fill to #5555 if empty.
+    if (!dialed) setDialed('#5555');
     setPhase('connecting');
-    setTimeout(() => { setPhase('call'); callStart.current = Date.now(); runJiaCall(); }, 1400);
+    setCallTime('connecting…');
+    setTimeout(() => { setPhase('call'); callStart.current = Date.now(); runCall(); }, 1400);
   }
 
-  async function runJiaCall() {
+  async function runCall() {
     cancelRef.current = false;
-    for (const turn of JIA_CALL_FLOW) {
+    for (const turn of FLOW) {
       if (cancelRef.current) return;
       setActiveSpeaker(turn.who);
       await playClip(turn.clip, turn.ms);
@@ -275,52 +246,36 @@ function App() {
     }
     if (cancelRef.current) return;
     await wait(450);
-    setPhase('messages-empty');
-    callStart.current = 0;
-    setCallTime('00:00');
+    endToMessages();
   }
 
   function endCall() {
     cancelRef.current = true; stopAudio();
     setActiveSpeaker(null);
+    endToMessages();
+  }
+
+  function endToMessages() {
+    callStart.current = 0; setCallTime('connecting…');
     setPhase('messages-empty');
-    callStart.current = 0;
-    setCallTime('00:00');
   }
 
-  function skipToMomCall() {
-    setPhase('mom-call');
-    setMomCallLines([]); setMomCallEnded(false);
-    setTimeout(runMomCall, 600);
-  }
-
-  async function runMomCall() {
-    cancelRef.current = false;
-    // Brief "thinking" beat before the transcript starts arriving
-    await wait(800);
-    for (const turn of MOM_CALL_FLOW) {
-      if (cancelRef.current) return;
-      setMomCallLines(prev => [...prev, { who: turn.who, text: turn.text, id: Math.random() }]);
-      // Play audio while line is on screen (graceful no-op without files)
-      await playClip(turn.clip, turn.ms);
-      if (cancelRef.current) return;
-      await wait(220);
-    }
-    setMomCallEnded(true);
-    await wait(900);
+  async function skipToConfirmation() {
+    setPhase('messages-confirmed');
     setThinking(true);
     await wait(900);
     setThinking(false);
     setConfirmShown(true);
-    setPhase('messages-confirmed');
   }
 
   function restart() {
     cancelRef.current = true; stopAudio();
-    setActiveSpeaker(null); setMomCallLines([]); setMomCallEnded(false); setConfirmShown(false);
-    setThinking(false); callStart.current = 0; setCallTime('00:00');
+    setActiveSpeaker(null); setDialed(''); setConfirmShown(false); setThinking(false);
+    callStart.current = 0; setCallTime('connecting…');
     setPhase('dialer');
   }
+
+  const orbClass = `orb ${activeSpeaker === 'jia' ? 'speaking' : ''} ${activeSpeaker === 'user' ? 'listening' : ''}`;
 
   return (
     <div className="device">
@@ -336,37 +291,41 @@ function App() {
       </div>
 
       {phase === 'dialer' && (
-        <div className="dialer">
-          <div className="av">J</div>
-          <div>
-            <h2>Jia</h2>
-            <div className="num">Personal assistant</div>
+        <div className="screen-dialer">
+          <div className="dialer-display">
+            <span className="dialer-number">{dialed}<span className="dialer-cursor"/></span>
           </div>
-          <div className="hint">Tap the green button to call Jia and ask her to ring your mum about her BP medicines.</div>
-          <button className="dial-btn" onClick={startCall} aria-label="Call Jia">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M21 15.46l-5.27-.61a1.25 1.25 0 0 0-1.06.36l-2.16 2.17a16 16 0 0 1-7.06-7.07l2.18-2.16a1.25 1.25 0 0 0 .36-1.06L7.39 1.83A1.25 1.25 0 0 0 6.16 1H3a2 2 0 0 0-2 2 22 22 0 0 0 22 22 2 2 0 0 0 2-2v-3.16a1.25 1.25 0 0 0-1-1.38z"/></svg>
-          </button>
+          <div className="dialer-grid">
+            {KEYS.map(([d, l, sym], i) => (
+              <button key={i} className={`dial-key ${sym ? 'symbol' : ''}`} onClick={() => pressKey(d)}>
+                <span className="digit">{d}</span>
+                <span className="letters">{l || ' '}</span>
+              </button>
+            ))}
+          </div>
+          <div className="dialer-actions">
+            <button className="call-btn" onClick={startCall} aria-label="Call">
+              <svg viewBox="0 0 24 24"><path d="M21 15.46l-5.27-.61a1.25 1.25 0 0 0-1.06.36l-2.16 2.17a16 16 0 0 1-7.06-7.07l2.18-2.16a1.25 1.25 0 0 0 .36-1.06L7.39 1.83A1.25 1.25 0 0 0 6.16 1H3a2 2 0 0 0-2 2 22 22 0 0 0 22 22 2 2 0 0 0 2-2v-3.16a1.25 1.25 0 0 0-1-1.38z"/></svg>
+            </button>
+            <button className="delete-btn" onClick={backspace} disabled={!dialed}>
+              <svg viewBox="0 0 28 22" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3 L26 3 L26 19 L9 19 L2 11 Z"/><path d="M14 8 L20 14 M20 8 L14 14"/></svg>
+            </button>
+          </div>
+          <div className="dialer-hint">Dial <span className="code">#5555</span> to call Jia · or just tap the green button</div>
         </div>
       )}
 
       {(phase === 'connecting' || phase === 'call') && (
-        <div className="call-screen">
-          <div className="top-meta">
-            <div className="label">Call · Jia</div>
-            <div className="timer">{callTime}</div>
+        <div className="screen-call">
+          <div className="call-header">
+            <div className="call-name">Jia</div>
+            <div className="call-state">{phase === 'connecting' ? 'connecting…' : callTime}</div>
           </div>
-          <div className="stage">
-            <div className="pair">
-              <div className={`person ${activeSpeaker==='shreya' ? 'speaking' : ''}`}>
-                <div className={`av-shreya ${activeSpeaker==='shreya' ? 'speaking' : ''}`}>S</div>
-                <div className="name">You</div>
-                <div className="badge">{activeSpeaker==='shreya' ? '🎙 Speaking' : 'On call'}</div>
-              </div>
-              <div className={`person ${activeSpeaker==='jia' ? 'speaking' : ''}`}>
-                <div className={`av-jia ${activeSpeaker==='jia' ? 'speaking' : ''}`}>J</div>
-                <div className="name">Jia</div>
-                <div className="badge">{activeSpeaker==='jia' ? '🎙 Speaking' : (phase==='connecting' ? 'Connecting…' : 'On call')}</div>
-              </div>
+          <div className="orb-area">
+            <div className={orbClass}>
+              <div className="orb-ring"/>
+              <span className="pulse"/><span className="pulse"/><span className="pulse"/>
+              <div className="orb-letter">{activeSpeaker === 'user' ? 'S' : 'J'}</div>
             </div>
           </div>
           <div className="actions">
@@ -385,7 +344,7 @@ function App() {
         </div>
       )}
 
-      {(phase === 'messages-empty' || phase === 'mom-call' || phase === 'messages-confirmed') && (
+      {(phase === 'messages-empty' || phase === 'messages-confirmed') && (
         <div className="thread-screen">
           <div className="thread-header">
             <div className="jia-avatar">J</div>
@@ -395,7 +354,7 @@ function App() {
             </div>
           </div>
           {phase === 'messages-empty' && (
-            <button className="skip-pill" onClick={skipToMomCall}>Skip to 9 AM →</button>
+            <button className="skip-pill" onClick={skipToConfirmation}>Skip to 9 AM →</button>
           )}
           <div className="thread-body" ref={threadRef}>
             {phase === 'messages-empty' && (
@@ -404,46 +363,20 @@ function App() {
                 <span style={{color:'#A8A8A8', fontSize:12}}>Use the pill above to fast-forward.</span>
               </div>
             )}
-            {(phase === 'mom-call' || phase === 'messages-confirmed') && (
+            {phase === 'messages-confirmed' && (
               <>
-                <div className="time-divider">Today, 9:00 AM</div>
-                <div className="bubble-row jia">
-                  <div className="bubble-avatar"><div className="jia-avatar" style={{width:28,height:28,fontSize:12}}>J</div></div>
-                  <div className="bubble jia">Calling your mum now to remind her about her BP medicines…</div>
-                </div>
-                <div className="call-card">
-                  <div className="head">
-                    <div className="who"><div className="av jia">J</div></div>
-                    <span className="arrow">→</span>
-                    <div className="who"><div className="av mom">M</div></div>
-                    <div className="meta">
-                      <div className="tag">{momCallEnded ? 'Call ended' : <><span className="live-pip"/>Live</>}</div>
-                      <div className="timer">{momCallTimer}</div>
-                    </div>
-                  </div>
-                  <div className="body">
-                    {momCallLines.map(l => (
-                      <div key={l.id} className={`call-line ${l.who}`}>
-                        <span className="who">{l.who === 'jia' ? 'Jia' : 'Mum'}</span>
-                        <span className="text">"{l.text}"</span>
-                      </div>
-                    ))}
-                  </div>
-                  {momCallEnded && (
-                    <div className="ended">✓ Reminder delivered · mum acknowledged</div>
-                  )}
-                </div>
-                {thinking && (
+                <div className="time-divider">Today, 9:01 AM</div>
+                {thinking ? (
                   <div className="bubble-row jia">
                     <div className="bubble-avatar"><div className="jia-avatar" style={{width:28,height:28,fontSize:12}}>J</div></div>
                     <div className="typing"><span/><span/><span/></div>
                   </div>
-                )}
+                ) : null}
                 {confirmShown && (
                   <>
                     <div className="bubble-row jia">
                       <div className="bubble-avatar"><div className="jia-avatar" style={{width:28,height:28,fontSize:12}}>J</div></div>
-                      <div className="bubble jia">Done! She said: <i>"Oh thank you beta, I'll take them right now."</i> 💛</div>
+                      <div className="bubble jia">Done — I called your mum and reminded her about her BP medicines. She said: <i>"Oh thank you beta, I'll take them right now."</i> 💛</div>
                     </div>
                     <div className="receipt-card">
                       <div className="head">
@@ -455,7 +388,7 @@ function App() {
                       </div>
                       <div className="meta">
                         <div className="row"><div className="k">When</div><div className="v">9:00 AM</div></div>
-                        <div className="row"><div className="k">Duration</div><div className="v">{momCallTimer}</div></div>
+                        <div className="row"><div className="k">Duration</div><div className="v">00:38</div></div>
                         <div className="row"><div className="k">Status</div><div className="v" style={{color:'#4ED65A'}}>Acknowledged</div></div>
                         <div className="row"><div className="k">Repeat</div><div className="v">Daily</div></div>
                       </div>
@@ -473,6 +406,8 @@ function App() {
           </div>
         </div>
       )}
+
+      <div className="home-indicator"></div>
     </div>
   );
 }
