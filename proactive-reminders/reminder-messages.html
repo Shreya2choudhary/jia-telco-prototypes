@@ -146,12 +146,23 @@
     0%, 100% { box-shadow: 0 0 0 rgba(247,171,32,0); }
     50% { box-shadow: 0 0 24px rgba(247,171,32,0.55); }
   }
-  .reminder-card .actions { display: flex; border-top: 1px solid rgba(255,255,255,0.08); }
-  .reminder-card .actions button { flex: 1; padding: 12px 8px; background: none; border: none;
-    border-left: 1px solid rgba(255,255,255,0.08); cursor: pointer;
-    font-size: 12px; font-weight: 700; color: #F7AB20; font-family: inherit; }
-  .reminder-card .actions button:first-child { border-left: none; }
-  .reminder-card .actions button:hover { background: rgba(255,255,255,0.04); }
+  .reminder-card .actions { padding: 10px 12px 12px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex; flex-direction: column; gap: 8px; }
+  .reminder-card .snooze-row { display: flex; gap: 6px; }
+  .reminder-card .snooze-row button { flex: 1; padding: 9px 4px;
+    background: rgba(247,171,32,0.08); color: #F7AB20;
+    border: 1px solid rgba(247,171,32,0.35); border-radius: 999px;
+    font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; }
+  .reminder-card .snooze-row button:hover { background: rgba(247,171,32,0.16); }
+  .reminder-card .primary-row { display: flex; }
+  .reminder-card .primary-row button { flex: 1; padding: 12px;
+    background: linear-gradient(145deg, #FFC86B, #F7AB20);
+    border: none; border-radius: 999px;
+    color: #0E0E10; font-size: 14px; font-weight: 800; font-family: inherit;
+    cursor: pointer; box-shadow: 0 4px 14px rgba(247,171,32,0.35);
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .reminder-card .primary-row button:hover { filter: brightness(1.05); }
 
   .composer { padding: 10px 12px; background: #1F1F22; border-top: 1px solid #2A2A2D; flex-shrink: 0; }
   .composer-input { width: 100%; padding: 10px 14px; border-radius: 999px;
@@ -326,7 +337,7 @@ function App() {
         setPhase('acknowledged');
       }, 400);
     } else {
-      const min = action === 'snooze5' ? 5 : 10;
+      const min = action === 'snooze5' ? 5 : action === 'snooze10' ? 10 : action === 'snooze15' ? 15 : 30;
       setMessages(m => [...m, { t: 'user', text: `Snooze ${min} min`, id: Date.now() }]);
       setTimeout(() => {
         setMessages(m => [...m, { t: 'jia', text: `Okay — I'll remind you again in ${min} minutes.`, id: Date.now() }]);
@@ -358,15 +369,6 @@ function App() {
         <button className="trigger-pill" onClick={triggerDelivery}>
           Trigger 9 AM →
         </button>
-      )}
-      {(phase === 'delivering' || phase === 'delivered') && (
-        <div className="trigger-pill" style={{
-          background: 'rgba(78, 214, 90, 0.15)', color: '#4ED65A',
-          border: '1px solid rgba(78,214,90,0.4)', cursor: 'default',
-          boxShadow: 'none'
-        }}>
-          ✓ Delivered
-        </div>
       )}
 
       <div className="thread-screen">
@@ -438,15 +440,21 @@ function App() {
               return (
                 <div key={m.id} className="reminder-card">
                   <div className="body">
-                    <div className="tag">9:00 AM Reminder</div>
+                    <div className="tag">9:00 AM Reminder · Day 1 of 90</div>
                     <div className="title">💊 Take your BP medicines</div>
                     <div className="time">Daily · for the next 3 months</div>
                   </div>
                   {phase === 'delivering' || phase === 'delivered' ? (
                     <div className="actions">
-                      <button onClick={() => onReminderAction('taken')}>✅ Taken</button>
-                      <button onClick={() => onReminderAction('snooze5')}>Snooze 5m</button>
-                      <button onClick={() => onReminderAction('snooze10')}>Snooze 10m</button>
+                      <div className="snooze-row">
+                        <button onClick={() => onReminderAction('snooze5')}>Snooze 5m</button>
+                        <button onClick={() => onReminderAction('snooze10')}>Snooze 10m</button>
+                        <button onClick={() => onReminderAction('snooze15')}>Snooze 15m</button>
+                        <button onClick={() => onReminderAction('snooze30')}>Snooze 30m</button>
+                      </div>
+                      <div className="primary-row">
+                        <button onClick={() => onReminderAction('taken')}>✅ I've taken it</button>
+                      </div>
                     </div>
                   ) : null}
                 </div>
