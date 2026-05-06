@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Jia — Call Intelligence · Add to call (Messages)</title>
+<title>Jia — Call Intelligence · Add to call (Notification)</title>
 <style>
   @font-face { font-family: 'JioType'; font-weight: 500; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
   @font-face { font-family: 'JioType'; font-weight: 700; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
@@ -26,6 +26,37 @@
     background: rgba(28,28,30,0.85); color: #F2F2F2;
     border: 1px solid rgba(255,255,255,0.18); font-size: 12px; font-weight: 700;
     text-decoration: none; backdrop-filter: blur(10px); }
+
+  /* Incoming call screen */
+  .incoming { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    padding: 28px 24px 32px;
+    background: radial-gradient(ellipse at top, #1a1422 0%, #050505 80%); color: #fff; }
+  .incoming .label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.55);
+    letter-spacing: 0.05em; text-transform: uppercase; padding-top: 8px; }
+  .incoming .who { display: flex; flex-direction: column; align-items: center; gap: 16px; flex: 1; justify-content: center; }
+  .pulse-host { position: relative; width: 200px; height: 200px; display: grid; place-items: center; }
+  .pulse-host span.pulse { position: absolute; inset: 0; border-radius: 50%;
+    border: 2px solid rgba(124,58,237,0.55); animation: pulse-out 1.6s ease-out infinite; opacity: 0; }
+  .pulse-host span.pulse:nth-child(2) { animation-delay: 0.5s; }
+  .pulse-host span.pulse:nth-child(3) { animation-delay: 1.0s; }
+  .av-ananya { width: 128px; height: 128px; border-radius: 50%;
+    background: linear-gradient(145deg, #b08bff, #7C3AED 70%);
+    color: #fff; font-weight: 900; font-size: 60px; letter-spacing: -0.04em;
+    display: grid; place-items: center;
+    box-shadow: 0 0 60px rgba(124,58,237,0.5); }
+  .incoming .name { font-size: 32px; font-weight: 600; }
+  .incoming .sub  { font-size: 16px; color: rgba(255,255,255,0.65); }
+  .incoming .ring-text { font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+  .incoming .ans-row { display: flex; gap: 64px; }
+  .ans-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .ans-btn button { width: 70px; height: 70px; border-radius: 50%; border: none; cursor: pointer;
+    display: grid; place-items: center; }
+  .ans-btn .green { background: #2DD66A; box-shadow: 0 6px 20px rgba(45,214,106,0.4);
+    animation: mic-glow 1.6s ease-in-out infinite; }
+  .ans-btn .red   { background: #FF3B30; box-shadow: 0 6px 20px rgba(255,59,48,0.4); }
+  .ans-btn .lab { font-size: 12px; color: rgba(255,255,255,0.65); }
+
+  /* Call screen */
   .call-screen { flex: 1; display: flex; flex-direction: column;
     background: radial-gradient(ellipse at top, #1a1422 0%, #050505 80%); color: #fff;
     padding: 8px 24px 22px; }
@@ -34,39 +65,46 @@
     letter-spacing: 0.14em; text-transform: uppercase; }
   .timer { color: rgba(255,255,255,0.85); font-size: 15px; margin-top: 4px;
     font-variant-numeric: tabular-nums; }
-  .stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; position: relative; }
-  /* Single-avatar layout */
+  .stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; position: relative; }
   .stage.single .one-up { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-  .stage.single .one-up .name { font-size: 28px; font-weight: 600; color: #fff; letter-spacing: -0.01em; }
+  .stage.single .one-up .name { font-size: 28px; font-weight: 600; color: #fff; }
   .stage.single .one-up .sub  { font-size: 14px; color: rgba(255,255,255,0.55); }
-  /* Two-avatar layout */
-  .stage.two .pair { display: flex; gap: 14px; align-items: flex-end; }
+  .stage.two .pair { display: flex; gap: 32px; align-items: flex-end; }
   .stage.two .person { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .stage.two .person .name { font-size: 16px; font-weight: 700; color: #fff; }
   .stage.two .person .badge { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
-    padding: 2px 8px; border-radius: 999px; background: rgba(78,214,90,0.14); color: #4ED66A; border: 1px solid rgba(78,214,90,0.4); }
-  .stage.two .person.active .badge { background: rgba(247,171,32,0.16); color: #F7AB20; border-color: rgba(247,171,32,0.5); }
+    padding: 2px 8px; border-radius: 999px;
+    background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.15); }
+  .stage.two .person.speaking .badge { background: rgba(247,171,32,0.16); color: #F7AB20; border-color: rgba(247,171,32,0.5); }
 
-  .avatar-ananya { width: 110px; height: 110px; border-radius: 50%;
+  .av-pair-ananya { width: 96px; height: 96px; border-radius: 50%;
     background: linear-gradient(145deg, #b08bff, #7C3AED 70%);
-    color: #fff; font-weight: 900; font-size: 50px; letter-spacing: -0.04em;
+    color: #fff; font-weight: 900; font-size: 42px; letter-spacing: -0.04em;
     display: grid; place-items: center;
-    box-shadow: 0 0 40px rgba(124,58,237,0.4); transition: box-shadow 200ms; }
-  .avatar-ananya.small { width: 84px; height: 84px; font-size: 36px; }
-  .avatar-ananya.speaking { box-shadow: 0 0 48px rgba(124,58,237,0.7); animation: pulse-purple 1.4s ease-in-out infinite; }
-  .avatar-jia { width: 84px; height: 84px; border-radius: 50%;
+    box-shadow: 0 0 32px rgba(124,58,237,0.4); transition: box-shadow 200ms; }
+  .av-pair-ananya.speaking { box-shadow: 0 0 56px rgba(124,58,237,0.85);
+    animation: pulse-purple 1.4s ease-in-out infinite; }
+  .av-pair-jia { width: 96px; height: 96px; border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #FFC86B, #F7AB20 60%, #b06f00 100%);
-    color: #0E0E10; font-weight: 900; font-size: 38px; letter-spacing: -0.04em;
+    color: #0E0E10; font-weight: 900; font-size: 44px; letter-spacing: -0.04em;
     display: grid; place-items: center;
-    box-shadow: 0 0 40px rgba(247,171,32,0.45);
-    animation: jia-in 380ms cubic-bezier(0.4,0,0.2,1) both, mic-glow 1.6s ease-in-out infinite; }
-  .avatar-jia.speaking { box-shadow: 0 0 56px rgba(247,171,32,0.8); animation: jia-in 380ms cubic-bezier(0.4,0,0.2,1) both, pulse-gold 1.0s ease-in-out infinite; }
+    box-shadow: 0 0 32px rgba(247,171,32,0.45);
+    animation: jia-in 380ms cubic-bezier(0.4,0,0.2,1) both; }
+  .av-pair-jia.speaking { box-shadow: 0 0 60px rgba(247,171,32,0.85);
+    animation: jia-in 380ms cubic-bezier(0.4,0,0.2,1) both, pulse-gold 1.0s ease-in-out infinite; }
+  .av-single-ananya { width: 128px; height: 128px; border-radius: 50%;
+    background: linear-gradient(145deg, #b08bff, #7C3AED 70%);
+    color: #fff; font-weight: 900; font-size: 60px;
+    display: grid; place-items: center;
+    box-shadow: 0 0 50px rgba(124,58,237,0.45); transition: box-shadow 200ms; }
+  .av-single-ananya.speaking { box-shadow: 0 0 70px rgba(124,58,237,0.8);
+    animation: pulse-purple 1.4s ease-in-out infinite; }
 
-  /* Listening badge (Jia, when silent in background) */
+  /* Listening badge for Jia when silent */
   .listen-bar { display: inline-flex; align-items: center; gap: 6px;
     padding: 5px 11px; border-radius: 999px;
     background: rgba(78,214,90,0.12); border: 1px solid rgba(78,214,90,0.35);
-    font-size: 11px; font-weight: 700; color: #4ED65A; letter-spacing: 0.04em; }
+    font-size: 11px; font-weight: 700; color: #4ED65A; letter-spacing: 0.04em; margin-top: 8px; }
   .listen-bar .waves { display: inline-flex; gap: 2px; align-items: center; }
   .listen-bar .waves span { width: 2px; background: #4ED65A; border-radius: 1px;
     animation: wave 1.0s ease-in-out infinite; }
@@ -74,22 +112,7 @@
   .listen-bar .waves span:nth-child(2) { height: 12px; animation-delay: 0.15s; }
   .listen-bar .waves span:nth-child(3) { height: 6px; animation-delay: 0.3s; }
 
-  /* Caption ticker */
-  .ticker { width: 100%; min-height: 48px; max-width: 340px;
-    background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px; padding: 10px 14px;
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    transition: opacity 200ms; }
-  .ticker.empty { opacity: 0; }
-  .ticker .who { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
-    margin-bottom: 3px; }
-  .ticker .who.jia    { color: #F7AB20; }
-  .ticker .who.ananya { color: #b08bff; }
-  .ticker .who.shreya { color: #4ED66A; }
-  .ticker .who.system { color: rgba(255,255,255,0.5); }
-  .ticker .text { font-size: 13.5px; color: #F2F2F2; line-height: 1.4; letter-spacing: -0.005em; }
-
-  /* Action buttons row (mute / keypad / speaker / add / FaceTime / mic) */
+  /* Action buttons */
   .actions { display: grid; grid-template-columns: repeat(3, 1fr);
     gap: 12px 30px; padding: 8px 6px 4px; flex-shrink: 0; }
   .action { display: flex; flex-direction: column; align-items: center; gap: 5px;
@@ -99,15 +122,13 @@
     transition: background 150ms; }
   .action.active .icn { background: #fff; color: #000; }
   .action .lab { font-size: 11px; color: rgba(255,255,255,0.95); }
-
-  /* End call */
   .end-row { display: flex; justify-content: center; padding: 6px 0 0; flex-shrink: 0; }
   .end-btn { width: 64px; height: 64px; border-radius: 50%;
     background: #FF3B30; border: none; cursor: pointer;
     display: grid; place-items: center;
     box-shadow: 0 6px 20px rgba(255,59,48,0.4); }
 
-  /* Notification banner — drops down from top */
+  /* Notification banner */
   .notif-banner { position: absolute; top: 56px; left: 12px; right: 12px; z-index: 80;
     background: rgba(28,28,32,0.94); backdrop-filter: blur(14px);
     border: 1px solid rgba(247,171,32,0.45);
@@ -127,19 +148,13 @@
   .notif-banner .cta   { font-size: 11px; font-weight: 800; color: #F7AB20;
     text-transform: uppercase; letter-spacing: 0.1em; }
 
-  /* Trigger pill (debug) */
-  .trigger-pill { position: absolute; top: 60px; right: 12px; z-index: 60;
-    padding: 7px 12px; border-radius: 999px; background: rgba(247,171,32,0.18);
-    color: #F7AB20; border: 1px solid rgba(247,171,32,0.4); font-size: 12px; font-weight: 700;
-    cursor: pointer; font-family: inherit; }
-
-  /* Summary card (post-call) */
+  /* Summary screen */
   .summary-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
     text-align: center; padding: 32px; gap: 14px; color: #fff;
     background: radial-gradient(ellipse at top, #0a0a0c 0%, #050505 80%); }
   .summary-screen .checkmark { width: 76px; height: 76px; border-radius: 50%;
     background: linear-gradient(145deg, #FFC86B, #F7AB20); color: #0E0E10;
-    display: grid; place-items: center; font-weight: 900; font-size: 34px; letter-spacing: -0.04em;
+    display: grid; place-items: center; font-weight: 900; font-size: 34px;
     box-shadow: 0 6px 30px rgba(247,171,32,0.35); }
   .summary-screen h2 { font-size: 22px; font-weight: 800; }
   .summary-screen p  { font-size: 14px; color: rgba(255,255,255,0.65); max-width: 280px; line-height: 1.5; }
@@ -147,13 +162,13 @@
     background: linear-gradient(145deg, #FFC86B, #F7AB20); color: #0E0E10;
     border: none; font-family: inherit; font-weight: 800; font-size: 13px; cursor: pointer; }
 
-  /* Animations */
   @keyframes jia-in { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
   @keyframes slide-down { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes mic-glow { 0%,100% { box-shadow: 0 0 0 0 rgba(247,171,32,0.6); } 50% { box-shadow: 0 0 0 14px rgba(247,171,32,0); } }
-  @keyframes pulse-gold { 0%,100% { box-shadow: 0 0 56px rgba(247,171,32,0.85); } 50% { box-shadow: 0 0 80px rgba(247,171,32,0.4); } }
+  @keyframes pulse-gold   { 0%,100% { box-shadow: 0 0 56px rgba(247,171,32,0.85); } 50% { box-shadow: 0 0 80px rgba(247,171,32,0.4); } }
   @keyframes pulse-purple { 0%,100% { box-shadow: 0 0 48px rgba(124,58,237,0.75); } 50% { box-shadow: 0 0 70px rgba(124,58,237,0.35); } }
   @keyframes wave { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(0.4); } }
+  @keyframes pulse-out { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.6); opacity: 0; } }
 </style>
 </head>
 <body>
@@ -164,12 +179,10 @@
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
-// ── Audio cache & playback ────────────────────────────────
-const CLIPS = [
-  'at_entry_tone', 'at_sys_announce',
-  'at_ananya_open', 'at_shreya_yes', 'at_shreya_ask',
-  'at_jia_weather', 'at_ananya_lock', 'at_shreya_done', 'at_ananya_bye',
-];
+// Audio cache
+const CLIPS = ['phone_ring','at_entry_tone','at_sys_announce',
+  'at_ananya_open','at_shreya_yes','at_shreya_ask',
+  'at_jia_weather','at_ananya_lock','at_shreya_done','at_ananya_bye'];
 const CACHE = {};
 CLIPS.forEach(n => { const a = new Audio(`audio/${n}.wav`); a.preload = 'auto'; CACHE[n] = a; });
 let CURRENT = null;
@@ -185,31 +198,18 @@ function playClip(name) {
 }
 function stopAudio() { if (CURRENT) { try { CURRENT.pause(); CURRENT.currentTime = 0; } catch(_){} CURRENT = null; } }
 
-// ── Conversation script ───────────────────────────────────
-// Each turn: { who, clip, text, [trigger: 'notify'] }
-const SCRIPT = [
-  { who: 'ananya', clip: 'at_ananya_open',
-    text: "Hey Shreya! Are we still on for dinner tonight?" },
-  { who: 'shreya', clip: 'at_shreya_yes',
-    text: "Yes, was thinking 7:30. But the weather looks iffy — let me bring Jia in." },
-  { trigger: 'notify' },                      // notification appears, script pauses until tap
-  { who: 'system-tone', clip: 'at_entry_tone' },
-  { who: 'system', clip: 'at_sys_announce',
-    text: "AI assistant has joined the call. Jia." },
-  { who: 'shreya', clip: 'at_shreya_ask',
-    text: "Hey Jia, what's the weather for tonight? We're stepping out around 7:30." },
-  { who: 'jia', clip: 'at_jia_weather',
-    text: "Mumbai tonight is 27 degrees, partly cloudy. No rain expected. A comfortable evening for dinner." },
-  { who: 'ananya', clip: 'at_ananya_lock',
-    text: "Great. Let's lock 7:30 at Bastian then." },
-  { who: 'shreya', clip: 'at_shreya_done',
-    text: "Done. See you there!" },
-  { who: 'ananya', clip: 'at_ananya_bye',
-    text: "Bye!" },
-  { trigger: 'end' },
-];
-
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+// Conversation script — runs AFTER user taps the notification & Jia joins.
+const POST_JIA_SCRIPT = [
+  { who: 'ananya', clip: 'at_ananya_open' },
+  { who: 'shreya', clip: 'at_shreya_yes' },
+  { who: 'shreya', clip: 'at_shreya_ask' },
+  { who: 'jia',    clip: 'at_jia_weather' },
+  { who: 'ananya', clip: 'at_ananya_lock' },
+  { who: 'shreya', clip: 'at_shreya_done' },
+  { who: 'ananya', clip: 'at_ananya_bye' },
+];
 
 function App() {
   // Auto-fit
@@ -224,17 +224,16 @@ function App() {
     return () => window.removeEventListener('resize', fit);
   }, []);
 
-  const [phase, setPhase]       = useState('call');         // 'call' | 'jia-joining' | 'ended'
-  const [jiaOnCall, setJiaOnCall] = useState(false);        // is Jia a participant?
-  const [activeSpeaker, setActiveSpeaker] = useState(null); // 'jia' | 'ananya' | 'shreya' | 'system'
-  const [ticker, setTicker]     = useState(null);            // { who, text }
+  const [phase, setPhase]       = useState('incoming');     // incoming | call | ended
+  const [jiaOnCall, setJiaOnCall] = useState(false);
+  const [activeSpeaker, setActiveSpeaker] = useState(null); // 'ananya' | 'shreya' | 'jia' | null
+  const [ringCount, setRingCount] = useState(0);
   const [notif, setNotif]       = useState(false);
-  const [scriptIdx, setScriptIdx] = useState(0);
   const [callTime, setCallTime] = useState('00:00');
   const [statusTime, setStatusTime] = useState(() => {
     const d = new Date(); return d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0');
   });
-  const callStart = useRef(Date.now());
+  const callStart = useRef(0);
   const cancelRef = useRef(false);
 
   // Status bar clock
@@ -244,9 +243,10 @@ function App() {
     }, 30_000); return () => clearInterval(t);
   }, []);
 
-  // Call timer
+  // Call timer (only during 'call' phase)
   useEffect(() => {
-    if (phase !== 'call' && phase !== 'jia-joining') return;
+    if (phase !== 'call') return;
+    if (!callStart.current) callStart.current = Date.now();
     const t = setInterval(() => {
       const s = Math.floor((Date.now() - callStart.current) / 1000);
       const m = Math.floor(s / 60), r = s % 60;
@@ -255,64 +255,75 @@ function App() {
     return () => clearInterval(t);
   }, [phase]);
 
-  // Drive the script
-  async function runFrom(idx) {
-    cancelRef.current = false;
-    let i = idx;
-    while (i < SCRIPT.length && !cancelRef.current) {
-      const turn = SCRIPT[i];
-      if (turn.trigger === 'notify') {
-        setNotif(true);
-        // Stop here — wait for user to tap. Tap will call resumeFromNotify(i+1).
-        setScriptIdx(i + 1);
-        return;
-      }
-      if (turn.trigger === 'end') {
-        setActiveSpeaker(null); setTicker(null);
-        await wait(500);
-        setPhase('ended');
-        return;
-      }
-      // Show ticker + play clip
-      setActiveSpeaker(turn.who);
-      if (turn.text) setTicker({ who: turn.who, text: turn.text });
-      else setTicker(null);
-      if (turn.clip) {
-        // Special: entry tone is brief
-        await playClip(turn.clip);
-      }
-      // Brief pause between turns
-      await wait(turn.who === 'system-tone' ? 100 : 350);
-      i += 1;
-      setScriptIdx(i);
-    }
-  }
-  useEffect(() => { runFrom(0); /* eslint-disable-next-line */ }, []);
+  // Ringing loop while incoming (visual + ring sound up to 5x)
+  useEffect(() => {
+    if (phase !== 'incoming') return;
+    if (ringCount >= 6) return;
+    try {
+      const r = CACHE['phone_ring']; if (r) { r.currentTime = 0; r.play().catch(()=>{}); }
+    } catch(_) {}
+    const t = setTimeout(() => setRingCount(c => c + 1), 1300);
+    return () => clearTimeout(t);
+  }, [phase, ringCount]);
 
-  function onTapNotif() {
+  // Stop ring when phase changes
+  useEffect(() => {
+    if (phase !== 'incoming') {
+      try { const r = CACHE['phone_ring']; if (r) { r.pause(); r.currentTime = 0; } } catch(_) {}
+    }
+  }, [phase]);
+
+  function onAnswer() {
+    setPhase('call');
+    callStart.current = Date.now();
+    setCallTime('00:00');
+    // The notification appears automatically ~1.5 seconds after pickup
+    setTimeout(() => { if (!cancelRef.current) setNotif(true); }, 1500);
+  }
+  function onDecline() {
+    setPhase('ended');
+  }
+
+  async function onTapNotif() {
     setNotif(false);
-    setPhase('jia-joining');
+    cancelRef.current = false;
+    // Entry tone + announcement
+    setActiveSpeaker(null);
+    await playClip('at_entry_tone');
+    if (cancelRef.current) return;
     setJiaOnCall(true);
-    // Resume script from saved index
-    setTimeout(() => {
-      setPhase('call');
-      runFrom(scriptIdx);
-    }, 200);
+    await wait(150);
+    setActiveSpeaker('jia');
+    await playClip('at_sys_announce');
+    if (cancelRef.current) return;
+    setActiveSpeaker(null);
+    await wait(400);
+    // Run the post-Jia conversation
+    for (const turn of POST_JIA_SCRIPT) {
+      if (cancelRef.current) return;
+      setActiveSpeaker(turn.who);
+      await playClip(turn.clip);
+      if (cancelRef.current) return;
+      setActiveSpeaker(null);
+      await wait(380);
+    }
+    if (!cancelRef.current) {
+      await wait(400);
+      setPhase('ended');
+    }
   }
 
   function endCall() {
     cancelRef.current = true; stopAudio();
-    setActiveSpeaker(null); setTicker(null); setPhase('ended');
+    setActiveSpeaker(null); setNotif(false); setPhase('ended');
   }
 
   function restart() {
     cancelRef.current = true; stopAudio();
     setNotif(false); setJiaOnCall(false);
-    setActiveSpeaker(null); setTicker(null);
-    setScriptIdx(0); setCallTime('00:00');
-    callStart.current = Date.now();
-    setPhase('call');
-    setTimeout(() => runFrom(0), 100);
+    setActiveSpeaker(null); setRingCount(0);
+    setCallTime('00:00'); callStart.current = 0;
+    setPhase('incoming');
   }
 
   return (
@@ -327,7 +338,38 @@ function App() {
         </span>
       </div>
 
-      {phase !== 'ended' && (
+      {phase === 'incoming' && (
+        <div className="incoming">
+          <div>
+            <div className="label" style={{textAlign: 'center'}}>Mobile · saved contact</div>
+          </div>
+          <div className="who">
+            <div className="pulse-host">
+              <span className="pulse"/><span className="pulse"/><span className="pulse"/>
+              <div className="av-ananya">A</div>
+            </div>
+            <div className="name">Ananya</div>
+            <div className="sub">Friends · Mobile</div>
+            <div className="ring-text">incoming call</div>
+          </div>
+          <div className="ans-row">
+            <div className="ans-btn">
+              <button className="red" onClick={onDecline}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M21 15.46l-5.27-.61a1.25 1.25 0 0 0-1.06.36l-2.16 2.17a16 16 0 0 1-7.06-7.07l2.18-2.16a1.25 1.25 0 0 0 .36-1.06L7.39 1.83A1.25 1.25 0 0 0 6.16 1H3a2 2 0 0 0-2 2 22 22 0 0 0 22 22 2 2 0 0 0 2-2v-3.16a1.25 1.25 0 0 0-1-1.38z" transform="rotate(135 12 12)"/></svg>
+              </button>
+              <span className="lab">decline</span>
+            </div>
+            <div className="ans-btn">
+              <button className="green" onClick={onAnswer}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              </button>
+              <span className="lab">answer</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {phase === 'call' && (
         <div className="call-screen">
           <div className="top-meta">
             <div className="label">{jiaOnCall ? 'Conference call · 3 of 3' : 'On a call'}</div>
@@ -337,50 +379,37 @@ function App() {
           <div className={`stage ${jiaOnCall ? 'two' : 'single'}`}>
             {!jiaOnCall ? (
               <div className="one-up">
-                <div className={`avatar-ananya ${activeSpeaker === 'ananya' ? 'speaking' : ''}`}>A</div>
+                <div className={`av-single-ananya ${activeSpeaker === 'ananya' ? 'speaking' : ''}`}>A</div>
                 <div className="name">Ananya</div>
                 <div className="sub">Friends · Mobile</div>
               </div>
             ) : (
-              <div className="pair">
-                <div className={`person ${activeSpeaker === 'ananya' ? 'active' : ''}`}>
-                  <div className={`avatar-ananya small ${activeSpeaker === 'ananya' ? 'speaking' : ''}`}>A</div>
-                  <div className="name">Ananya</div>
-                  <div className="badge">{activeSpeaker === 'ananya' ? '🎙 Speaking' : 'Online'}</div>
-                </div>
-                <div className={`person ${activeSpeaker === 'jia' ? 'active' : ''}`}>
-                  <div className={`avatar-jia ${activeSpeaker === 'jia' ? 'speaking' : ''}`}>J</div>
-                  <div className="name">Jia</div>
-                  <div className="badge">{activeSpeaker === 'jia' ? '🎙 Speaking' : 'Listening'}</div>
-                </div>
-              </div>
-            )}
-
-            {jiaOnCall && activeSpeaker !== 'jia' && (
-              <div className="listen-bar" style={{marginTop: 6}}>
-                <span className="waves"><span/><span/><span/></span>
-                Jia · listening in the background
-              </div>
-            )}
-
-            <div className={`ticker ${ticker ? '' : 'empty'}`} style={{marginTop: 14}}>
-              {ticker && (
-                <>
-                  <div className={`who ${ticker.who}`}>
-                    {ticker.who === 'jia' ? 'Jia' :
-                     ticker.who === 'ananya' ? 'Ananya' :
-                     ticker.who === 'shreya' ? 'You · Shreya' :
-                     ticker.who === 'system' ? 'System' : ''}
+              <>
+                <div className="pair">
+                  <div className={`person ${activeSpeaker === 'ananya' ? 'speaking' : ''}`}>
+                    <div className={`av-pair-ananya ${activeSpeaker === 'ananya' ? 'speaking' : ''}`}>A</div>
+                    <div className="name">Ananya</div>
+                    <div className="badge">{activeSpeaker === 'ananya' ? '🎙 Speaking' : 'Online'}</div>
                   </div>
-                  <div className="text">{ticker.text}</div>
-                </>
-              )}
-            </div>
+                  <div className={`person ${activeSpeaker === 'jia' ? 'speaking' : ''}`}>
+                    <div className={`av-pair-jia ${activeSpeaker === 'jia' ? 'speaking' : ''}`}>J</div>
+                    <div className="name">Jia</div>
+                    <div className="badge">{activeSpeaker === 'jia' ? '🎙 Speaking' : 'Listening'}</div>
+                  </div>
+                </div>
+                {activeSpeaker !== 'jia' && (
+                  <div className="listen-bar">
+                    <span className="waves"><span/><span/><span/></span>
+                    Jia · listening in the background
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           <div className="actions">
             <button className="action"><span className="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 2h6v10a3 3 0 0 1-6 0V2zM4 11a8 8 0 0 0 16 0M12 19v3"/></svg></span><span className="lab">mute</span></button>
-            <button className="action"><span className="icn">{[6,12,18].flatMap(y => [6,12,18].map(x => <span key={x+'-'+y} style={{display:'inline-block',width:3,height:3,borderRadius:2,background:'#fff',position:'absolute',transform:`translate(${x-12}px,${y-12}px)`}}/>))}</span><span className="lab">keypad</span></button>
+            <button className="action"><span className="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="6" r="1.5"/><circle cx="12" cy="6" r="1.5"/><circle cx="18" cy="6" r="1.5"/><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/><circle cx="6" cy="18" r="1.5"/><circle cx="12" cy="18" r="1.5"/><circle cx="18" cy="18" r="1.5"/></svg></span><span className="lab">keypad</span></button>
             <button className="action active"><span className="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 10v4a3 3 0 0 0 3 3h2l5 4V3L8 7H6a3 3 0 0 0-3 3z"/><path d="M16 8a5 5 0 0 1 0 8M19 5a9 9 0 0 1 0 14"/></svg></span><span className="lab">speaker</span></button>
             <button className="action"><span className="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0M18 7v6M15 10h6"/></svg></span><span className="lab">add</span></button>
             <button className="action"><span className="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 8l-6 4 6 4V8z"/></svg></span><span className="lab">FaceTime</span></button>
@@ -395,8 +424,7 @@ function App() {
         </div>
       )}
 
-      {/* Notification banner — drops down + waits for user tap */}
-      {notif && (
+      {notif && phase === 'call' && (
         <div className="notif-banner" onClick={onTapNotif}>
           <div className="ico">J</div>
           <div className="body">
