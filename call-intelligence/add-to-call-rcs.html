@@ -180,7 +180,7 @@
 const { useState, useEffect, useRef } = React;
 
 // Audio cache
-const CLIPS = ['phone_ring','at_entry_tone','at_sys_announce',
+const CLIPS = ['phone_ring','at_entry_tone','at_sys_announce','at_jia_greeting',
   'at_ananya_open','at_shreya_yes','at_shreya_ask',
   'at_jia_weather','at_ananya_lock','at_shreya_done','at_ananya_bye'];
 const CACHE = {};
@@ -320,7 +320,10 @@ function App() {
       setNotif(false);
     }
 
-    // Quick beat, then entry tone + system voice "AI assistant has joined"
+    // Quick beat, then entry tone → system voice ("AI assistant has joined.
+    // Jia.") → Jia herself greeting in her own voice ("Hi, this is Jia,
+    // Shreya's AI assistant. I'll listen in the background — just call my
+    // name when you need me.")
     await wait(120);
     if (cancelRef.current) return;
     setActiveSpeaker(null);
@@ -330,6 +333,9 @@ function App() {
     await wait(180);
     setActiveSpeaker('jia');
     await playClip('at_sys_announce');
+    if (cancelRef.current) return;
+    await wait(220);
+    await playClip('at_jia_greeting');
     if (cancelRef.current) return;
     setActiveSpeaker(null);
     await wait(450);
@@ -479,7 +485,7 @@ function App() {
           <div className="ico">J</div>
           <div className="body">
             <div className="title">Add agent to call</div>
-            <div className="sub">Jia is available · she'll join silently</div>
+            <div className="sub">Jia will join with a chime + brief greeting</div>
           </div>
           <div className="cta">Tap →</div>
         </div>
@@ -489,7 +495,7 @@ function App() {
         <div className="summary-screen">
           <div className="checkmark">✓</div>
           <h2>Call ended</h2>
-          <p>You added Jia mid-call. She joined silently and answered your weather question. Dinner locked in: <b style={{color:'#F7AB20'}}>7:30 PM at Bastian</b>.</p>
+          <p>You added Jia mid-call. She joined with a chime, introduced herself, then answered your weather question. Dinner locked in: <b style={{color:'#F7AB20'}}>7:30 PM at Bastian</b>.</p>
           <button className="replay" onClick={restart}>Replay demo</button>
         </div>
       )}
