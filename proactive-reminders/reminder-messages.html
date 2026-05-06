@@ -173,6 +173,30 @@
     display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
   .reminder-card .primary-row button:hover { filter: brightness(1.05); }
 
+  /* Sticky action panel pinned above the composer during delivery —
+     so the user can always tap the reminder actions even if the in-thread
+     card has scrolled out of view. */
+  .live-reminder-bar { padding: 12px; background: linear-gradient(180deg, #1A1612, #1F1A14);
+    border-top: 1.5px solid rgba(247,171,32,0.35); flex-shrink: 0;
+    display: flex; flex-direction: column; gap: 8px;
+    animation: in 320ms cubic-bezier(0.4,0,0.2,1) both; }
+  .live-reminder-bar .lr-title { font-size: 11px; font-weight: 800; color: #F7AB20;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px; }
+  .live-reminder-bar .lr-title .live-dot { background: #F7AB20; }
+  .live-reminder-bar .lr-snooze { display: flex; gap: 6px; }
+  .live-reminder-bar .lr-snooze button { flex: 1; padding: 8px 4px;
+    background: rgba(247,171,32,0.10); color: #F7AB20;
+    border: 1px solid rgba(247,171,32,0.35); border-radius: 999px;
+    font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; }
+  .live-reminder-bar .lr-snooze button:hover { background: rgba(247,171,32,0.18); }
+  .live-reminder-bar .lr-primary { padding: 11px;
+    background: linear-gradient(145deg, #FFC86B, #F7AB20);
+    border: none; border-radius: 999px;
+    color: #0E0E10; font-size: 14px; font-weight: 800; font-family: inherit;
+    cursor: pointer; box-shadow: 0 4px 14px rgba(247,171,32,0.35); }
+  .live-reminder-bar .lr-primary:hover { filter: brightness(1.05); }
+
   .composer { padding: 10px 12px; background: #1F1F22; border-top: 1px solid #2A2A2D; flex-shrink: 0; }
   .composer-input { width: 100%; padding: 10px 14px; border-radius: 999px;
     background: #2A2A2C; border: none; color: #F2F2F2; font-size: 14px;
@@ -454,6 +478,9 @@ function App() {
               );
             }
             if (m.t === 'reminder') {
+              // Card stays in the transcript as the visual record. The
+              // tappable actions live in the sticky bar pinned above the
+              // composer (rendered below) so they're always reachable.
               return (
                 <div key={m.id} className="reminder-card">
                   <div className="body">
@@ -461,19 +488,6 @@ function App() {
                     <div className="title">💊 Take your BP medicines</div>
                     <div className="time">Daily · for the next 3 months</div>
                   </div>
-                  {phase === 'delivering' || phase === 'delivered' ? (
-                    <div className="actions">
-                      <div className="snooze-row">
-                        <button onClick={() => onReminderAction('snooze5')}>Snooze 5m</button>
-                        <button onClick={() => onReminderAction('snooze10')}>Snooze 10m</button>
-                        <button onClick={() => onReminderAction('snooze15')}>Snooze 15m</button>
-                        <button onClick={() => onReminderAction('snooze30')}>Snooze 30m</button>
-                      </div>
-                      <div className="primary-row">
-                        <button onClick={() => onReminderAction('taken')}>✅ I've taken it</button>
-                      </div>
-                    </div>
-                  ) : null}
                 </div>
               );
             }
@@ -486,6 +500,20 @@ function App() {
             </div>
           )}
         </div>
+        {(phase === 'delivering' || phase === 'delivered') && (
+          <div className="live-reminder-bar">
+            <div className="lr-title"><span className="live-dot"/>Live reminder · 9:00 AM</div>
+            <div className="lr-snooze">
+              <button onClick={() => onReminderAction('snooze5')}>Snooze 5m</button>
+              <button onClick={() => onReminderAction('snooze10')}>10m</button>
+              <button onClick={() => onReminderAction('snooze15')}>15m</button>
+              <button onClick={() => onReminderAction('snooze30')}>30m</button>
+            </div>
+            <button className="lr-primary" onClick={() => onReminderAction('taken')}>
+              ✅ I've taken it
+            </button>
+          </div>
+        )}
         <div className="composer">
           <input className="composer-input" placeholder="Type a message" disabled/>
         </div>
