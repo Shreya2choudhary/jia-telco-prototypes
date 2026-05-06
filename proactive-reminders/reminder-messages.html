@@ -263,15 +263,17 @@ function App() {
 
   useEffect(() => {
     if (!threadRef.current) return;
-    // Smooth scroll to bottom; use rAF so layout has flushed.
-    requestAnimationFrame(() => {
+    const scrollToBottom = () => {
       const el = threadRef.current;
       if (!el) return;
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-      // Belt-and-braces: also bring the last reminder card into view if present.
-      const card = el.querySelector('.reminder-card:last-of-type');
-      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
+    };
+    // Immediate after layout flushes...
+    requestAnimationFrame(scrollToBottom);
+    // ...and again after the reminder card's pop-in animation has played
+    // out (600ms), so we account for any late layout from the card growing in.
+    const t = setTimeout(scrollToBottom, 700);
+    return () => clearTimeout(t);
   }, [messages, typing]);
 
   // Chip gate — flow pauses on 'await-chip' until user taps a chip.
