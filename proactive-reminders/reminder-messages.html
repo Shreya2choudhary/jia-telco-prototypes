@@ -130,14 +130,22 @@
   @keyframes slide-sheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
   /* Reminder delivery rich card with action chips */
-  .reminder-card { margin: 6px 0 6px 34px; max-width: 90%;
-    background: linear-gradient(180deg, rgba(247,171,32,0.10), #232325);
-    border: 1.5px solid rgba(247,171,32,0.5); border-radius: 20px;
-    overflow: hidden; animation: in 320ms cubic-bezier(0.4,0,0.2,1) both; }
-  .reminder-card .body { padding: 14px 16px; }
+  .reminder-card { margin: 10px 0 10px 34px; max-width: 92%;
+    background: linear-gradient(180deg, rgba(247,171,32,0.18), #2A2419);
+    border: 2px solid #F7AB20; border-radius: 22px;
+    overflow: hidden; animation: reminder-pop 600ms cubic-bezier(0.34, 1.56, 0.64, 1) both, reminder-glow 2.4s ease-in-out 0.6s 2; }
+  .reminder-card .body { padding: 16px 18px; }
   .reminder-card .tag { font-size: 10px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #F7AB20; }
-  .reminder-card .title { font-size: 18px; font-weight: 800; color: #fff; margin-top: 4px; display: flex; align-items: center; gap: 8px; }
-  .reminder-card .time { font-size: 13px; color: #C8C8CC; margin-top: 4px; }
+  .reminder-card .title { font-size: 20px; font-weight: 900; color: #fff; margin-top: 4px; display: flex; align-items: center; gap: 8px; letter-spacing: -0.01em; }
+  .reminder-card .time { font-size: 13px; color: #C8C8CC; margin-top: 6px; }
+  @keyframes reminder-pop {
+    0% { opacity: 0; transform: scale(0.85) translateY(10px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes reminder-glow {
+    0%, 100% { box-shadow: 0 0 0 rgba(247,171,32,0); }
+    50% { box-shadow: 0 0 24px rgba(247,171,32,0.55); }
+  }
   .reminder-card .actions { display: flex; border-top: 1px solid rgba(255,255,255,0.08); }
   .reminder-card .actions button { flex: 1; padding: 12px 8px; background: none; border: none;
     border-left: 1px solid rgba(255,255,255,0.08); cursor: pointer;
@@ -205,7 +213,7 @@ const SETUP_FLOW = [
 
 const DELIVERY_FLOW = [
   { t: 'time',  text: 'Tomorrow, 9:00 AM' },
-  { t: 'jia',   text: "Good morning, Shreya 👋" },
+  { t: 'jia',   text: "Good morning, Shreya 👋  It's 9 AM — time for your BP medicines 💊" },
   { t: 'reminder' },
 ];
 
@@ -254,7 +262,16 @@ function App() {
   const threadRef = useRef(null);
 
   useEffect(() => {
-    if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
+    if (!threadRef.current) return;
+    // Smooth scroll to bottom; use rAF so layout has flushed.
+    requestAnimationFrame(() => {
+      const el = threadRef.current;
+      if (!el) return;
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+      // Belt-and-braces: also bring the last reminder card into view if present.
+      const card = el.querySelector('.reminder-card:last-of-type');
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
   }, [messages, typing]);
 
   // Chip gate — flow pauses on 'await-chip' until user taps a chip.
@@ -339,6 +356,15 @@ function App() {
         <button className="trigger-pill" onClick={triggerDelivery}>
           Trigger 9 AM →
         </button>
+      )}
+      {(phase === 'delivering' || phase === 'delivered') && (
+        <div className="trigger-pill" style={{
+          background: 'rgba(78, 214, 90, 0.15)', color: '#4ED65A',
+          border: '1px solid rgba(78,214,90,0.4)', cursor: 'default',
+          boxShadow: 'none'
+        }}>
+          ✓ Delivered
+        </div>
       )}
 
       <div className="thread-screen">
