@@ -305,24 +305,23 @@ function App() {
       if (cancelRef.current) return;
       setActiveSpeaker(null);
       if (tappedRef.current) break;
-      await wait(380);
+      await wait(200);
     }
 
-    // If the user hasn't tapped yet, hold here until they do (or until
-    // we time out). The notification stays visible the whole time.
+    // If the user hasn't tapped yet, hold here briefly. The notification
+    // stays up. After 4s we auto-tap so the demo always lands.
     const waitStart = Date.now();
-    while (!tappedRef.current && (Date.now() - waitStart) < 12_000) {
+    while (!tappedRef.current && (Date.now() - waitStart) < 4_000) {
       if (cancelRef.current) return;
-      await wait(140);
+      await wait(80);
     }
     if (!tappedRef.current) {
-      // Timeout fallback so the demo always lands.
       tappedRef.current = true;
       setNotif(false);
     }
 
-    // Brief beat, then entry tone + system voice "AI assistant has joined"
-    await wait(250);
+    // Quick beat, then entry tone + system voice "AI assistant has joined"
+    await wait(120);
     if (cancelRef.current) return;
     setActiveSpeaker(null);
     await playClip('at_entry_tone');
@@ -342,7 +341,7 @@ function App() {
       await playClip(turn.clip);
       if (cancelRef.current) return;
       setActiveSpeaker(null);
-      await wait(380);
+      await wait(200);
     }
     if (!cancelRef.current) {
       await wait(450);
@@ -355,9 +354,9 @@ function App() {
     callStart.current = Date.now();
     setCallTime('00:00');
     // Notification appears INSTANTLY on pickup and stays until the user
-    // taps it (or 12s timeout). Meanwhile the conversation auto-plays.
+    // taps it. Meanwhile the conversation starts right away — no pause.
     setNotif(true);
-    setTimeout(() => { if (!cancelRef.current) runCall(); }, 250);
+    runCall();
   }
   function onDecline() {
     setPhase('ended');

@@ -179,21 +179,24 @@ const { useState, useEffect, useRef } = React;
 // Setup: greeting → "Remind me" → typed reminder → channel pick → done
 // Delivery (trigger): rich reminder card with Taken / Snooze 5m / Snooze 10m chips
 
+// Chip-driven setup. Each await-chip pauses for an actual user tap;
+// the chip text becomes the user bubble.
 const SETUP_FLOW = [
   { t: 'time',  text: 'Today, 10:24' },
   { t: 'jia',   text: "Hey Shreya 👋  How can I help?" },
-  { t: 'chips', chips: ['Remind me', 'Brief me', 'Book an appointment', 'What can you do?'] },
-  { t: 'wait', ms: 700 },
-  { t: 'user',  text: 'Remind me' },
+  { t: 'await-chip', chips: ['Remind me', 'Brief me', 'Book an appointment', 'What can you do?'] },
   { t: 'typing', ms: 700 },
-  { t: 'jia',   text: "Sure — what should I remind you about? Type it like you'd say it." },
-  { t: 'wait', ms: 1100 },
-  { t: 'user',  text: 'Take my BP medicines at 9 AM, every day for 3 months.' },
+  { t: 'jia',   text: "Sure — what should I remind you about?" },
+  { t: 'await-chip', chips: ['Take my BP meds', 'Pay electricity bill', 'Call mom'] },
   { t: 'typing', ms: 800 },
-  { t: 'jia',   text: "Got it — BP medicines, every day at 9 AM, for the next three months. How would you like the reminder?" },
-  { t: 'chips', chips: ['📞 Call me', '💬 Message me'] },
-  { t: 'wait', ms: 800 },
-  { t: 'user',  text: 'Message me' },
+  { t: 'jia',   text: "Got it. What time?" },
+  { t: 'await-chip', chips: ['8:00 AM', '9:00 AM', '10:00 AM'] },
+  { t: 'typing', ms: 700 },
+  { t: 'jia',   text: "And how often?" },
+  { t: 'await-chip', chips: ['Daily for 3 months', 'Daily', 'Just tomorrow'] },
+  { t: 'typing', ms: 800 },
+  { t: 'jia',   text: "How would you like the reminder?" },
+  { t: 'await-chip', chips: ['📞 Call me', '💬 Message me'] },
   { t: 'typing', ms: 600 },
   { t: 'jia',   text: "Done — I'll send a Messages reminder every morning at 9." },
   { t: 'task',  task: { title: 'BP medicines', time: '9:00 AM', cadence: 'Daily · 3 months', channel: 'Messages' } },
@@ -254,12 +257,35 @@ function App() {
     if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
   }, [messages, typing]);
 
+  // Chip gate — flow pauses on 'await-chip' until user taps a chip.
+  const pendingChipRef = useRef(null);
+  function waitForChip() {
+    return new Promise(resolve => { pendingChipRef.current = resolve; });
+  }
+  function handleChipTap(label) {
+    if (pendingChipRef.current) {
+      const resolve = pendingChipRef.current;
+      pendingChipRef.current = null;
+      resolve(label);
+    }
+  }
+
   async function runFlow(flow, finalPhase) {
     cancelRef.current = false;
     for (const step of flow) {
       if (cancelRef.current) return;
       if (step.t === 'typing') { setTyping(true); await wait(step.ms || 700); setTyping(false); continue; }
       if (step.t === 'wait') { await wait(step.ms || 600); continue; }
+      if (step.t === 'await-chip') {
+        const chipId = Date.now() + Math.random();
+        setMessages(m => [...m, { t: 'chips', chips: step.chips, id: chipId, active: true }]);
+        const picked = await waitForChip();
+        if (cancelRef.current) return;
+        setMessages(m => m.map(msg => msg.id === chipId ? { ...msg, active: false } : msg));
+        setMessages(m => [...m, { t: 'user', text: picked, id: Date.now() + Math.random() }]);
+        await wait(280);
+        continue;
+      }
       setMessages(m => [...m, { ...step, id: Date.now() + Math.random() }]);
       await wait(360);
     }
@@ -340,7 +366,10 @@ function App() {
             if (m.t === 'chips') {
               return (
                 <div key={m.id} className="chips">
-                  {m.chips.map((c, i) => <button key={i} className="chip" disabled>{c}</button>)}
+                  {m.chips.map((c, i) => (
+                    <button key={i} className="chip" disabled={!m.active}
+                      onClick={() => m.active && handleChipTap(c)}>{c}</button>
+                  ))}
                 </div>
               );
             }

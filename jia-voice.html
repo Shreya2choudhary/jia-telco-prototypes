@@ -555,10 +555,10 @@ deleteBtn.addEventListener('click', () => {
   renderDialed();
 });
 
-// Auto-type "#555" on load (cinematic intro)
+// Auto-type "#5555" on load (cinematic intro)
 (async function autoType() {
   await new Promise(r => setTimeout(r, 700));
-  const seq = '#555';
+  const seq = '#5555';
   for (const c of seq) {
     pressKey(c);
     // visual press effect

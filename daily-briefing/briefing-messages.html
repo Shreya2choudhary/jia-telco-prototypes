@@ -194,22 +194,25 @@ const { useState, useEffect, useRef } = React;
 // Setup: greeting → chips → "Brief me" → typed inputs → confirm → done card
 // Delivery (trigger): morning greeting + 3 cards (news / commute / horoscope) + bye
 
+// Chip-driven setup flow. Each segment ends in an 'await-chip' that pauses
+// the script until the user actually taps a chip. The chip text becomes
+// the user bubble, and the script advances. Whichever chip is tapped, the
+// script proceeds to the next segment (single happy path for demo).
 const SETUP_FLOW = [
   { t: 'time',  text: 'Today, 10:24' },
   { t: 'jia',   text: "Hello Shreya 👋  I'm Jia. What can I help you with today?" },
-  { t: 'chips', chips: ['Brief me', 'Remind me', 'Book me an appointment', 'What can you do?'] },
-  { t: 'wait', ms: 700, label: '⌛ user picks "Brief me"' },
-  { t: 'user',  text: 'Brief me' },
+  { t: 'await-chip', chips: ['Brief me', 'Remind me', 'Book me an appointment', 'What can you do?'] },
   { t: 'typing', ms: 700 },
   { t: 'jia',   text: "Sure — what should I brief you on every morning?" },
-  { t: 'wait', ms: 1100, label: '⌛ user types' },
-  { t: 'user',  text: 'Top 3 news headlines, my commute to work, and my Virgo horoscope.' },
+  { t: 'await-chip', chips: ['Headlines + commute + horoscope', 'Just headlines', 'Headlines + horoscope'] },
   { t: 'typing', ms: 700 },
-  { t: 'jia',   text: "Got it — top headlines, your commute, and Virgo horoscope. What time should I send the briefing?" },
-  { t: 'wait', ms: 900 },
-  { t: 'user',  text: '8:30 AM, every day.' },
+  { t: 'jia',   text: "Got it. What time should I send the briefing?" },
+  { t: 'await-chip', chips: ['8:00 AM', '8:30 AM', '9:00 AM'] },
   { t: 'typing', ms: 700 },
-  { t: 'jia',   text: "Perfect. Daily briefing at 8:30 AM, in Messages." },
+  { t: 'jia',   text: "Perfect. Daily, or only on weekdays?" },
+  { t: 'await-chip', chips: ['Daily', 'Weekdays only', 'Just tomorrow'] },
+  { t: 'typing', ms: 700 },
+  { t: 'jia',   text: "Done. I'll send your briefing every morning, in Messages." },
   { t: 'task',  task: { title: 'Daily briefing', time: '8:30 AM', cadence: 'Daily', items: 'Top headlines · Commute · Virgo horoscope' } },
   { t: 'jia',   text: "You can pause, edit or delete this briefing any time — just tap the card above." },
 ];
@@ -302,6 +305,12 @@ function App() {
     if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
   }, [messages, typing]);
 
+  // pendingChipRef resolves when the user taps a chip during 'await-chip'.
+  const pendingChipRef = useRef(null);
+  function waitForChip() {
+    return new Promise(resolve => { pendingChipRef.current = resolve; });
+  }
+
   async function runFlow(flow, finalPhase) {
     cancelRef.current = false;
     for (const step of flow) {
@@ -310,10 +319,30 @@ function App() {
         setTyping(true); await wait(step.ms || 700); setTyping(false); continue;
       }
       if (step.t === 'wait') { await wait(step.ms || 600); continue; }
+      if (step.t === 'await-chip') {
+        // Show the chip row and pause the flow until the user picks one.
+        const chipId = Date.now() + Math.random();
+        setMessages(m => [...m, { t: 'chips', chips: step.chips, id: chipId, active: true }]);
+        const picked = await waitForChip();
+        if (cancelRef.current) return;
+        // Disable the chip row (so it can't be tapped again) and add the user bubble
+        setMessages(m => m.map(msg => msg.id === chipId ? { ...msg, active: false } : msg));
+        setMessages(m => [...m, { t: 'user', text: picked, id: Date.now() + Math.random() }]);
+        await wait(280);
+        continue;
+      }
       setMessages(m => [...m, { ...step, id: Date.now() + Math.random() }]);
       await wait(step.t === 'card' ? 600 : 320);
     }
     setPhase(finalPhase);
+  }
+
+  function handleChipTap(label) {
+    if (pendingChipRef.current) {
+      const resolve = pendingChipRef.current;
+      pendingChipRef.current = null;
+      resolve(label);
+    }
   }
 
   useEffect(() => { runFlow(SETUP_FLOW, 'scheduled'); /* eslint-disable-next-line */ }, []);
@@ -372,7 +401,10 @@ function App() {
             if (m.t === 'chips') {
               return (
                 <div key={m.id} className="chips">
-                  {m.chips.map((c, i) => <button key={i} className="chip" disabled>{c}</button>)}
+                  {m.chips.map((c, i) => (
+                    <button key={i} className="chip" disabled={!m.active}
+                      onClick={() => m.active && handleChipTap(c)}>{c}</button>
+                  ))}
                 </div>
               );
             }

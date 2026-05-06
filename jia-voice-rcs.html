@@ -246,12 +246,12 @@ function DialerScreen({ onCall }) {
     setTimeout(() => setPressed(p => p === d ? null : p), 140);
   };
 
-  // Auto-type #555
+  // Auto-type #5555
   useEffect(() => {
     let cancel = false;
     (async () => {
       await new Promise(r => setTimeout(r, 700));
-      const seq = '#555';
+      const seq = '#5555';
       for (const c of seq) {
         if (cancel) return;
         press(c);
