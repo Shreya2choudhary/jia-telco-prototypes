@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jia — Call Intelligence · Add to call (Messages)</title>
+<style>
+  @font-face { font-family: 'JioType'; font-weight: 500; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 700; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
+  @font-face { font-family: 'JioType'; font-weight: 900; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Black.woff2') format('woff2'); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { font-family: 'JioType', system-ui, sans-serif; background: #0A0A0B; color: #F2F2F2;
+    display: flex; align-items: center; justify-content: center; }
+  .device { width: 390px; height: 844px; background: #000; border-radius: 56px;
+    overflow: hidden; position: relative; transform-origin: top center;
+    border: 8px solid #0a0a0a; box-shadow: 0 30px 60px rgba(0,0,0,0.7);
+    display: flex; flex-direction: column; }
+  .island { position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 124px; height: 36px; background: #000; border-radius: 999px; z-index: 30; }
+  .statusbar { display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 30px 6px; font-size: 14px; font-weight: 700; color: #fff; height: 50px; flex-shrink: 0; }
+  .device-back-link { position: absolute; top: 14px; left: 12px; z-index: 200;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 7px 12px 7px 10px; border-radius: 999px;
+    background: rgba(28,28,30,0.85); color: #F2F2F2;
+    border: 1px solid rgba(255,255,255,0.18); font-size: 12px; font-weight: 700;
+    text-decoration: none; backdrop-filter: blur(10px); }
+  .call-screen { flex: 1; display: flex; flex-direction: column;
+    background: radial-gradient(ellipse at top, #1a1422 0%, #050505 80%); color: #fff;
+    padding: 8px 24px 22px; }
+  .top-meta { text-align: center; padding-top: 4px; flex-shrink: 0; }
+  .top-meta .label { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.55);
+    letter-spacing: 0.14em; text-transform: uppercase; }
+  .timer { color: rgba(255,255,255,0.85); font-size: 15px; margin-top: 4px;
+    font-variant-numeric: tabular-nums; }
+  .stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; position: relative; }
+  /* Single-avatar layout */
+  .stage.single .one-up { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .stage.single .one-up .name { font-size: 28px; font-weight: 600; color: #fff; letter-spacing: -0.01em; }
+  .stage.single .one-up .sub  { font-size: 14px; color: rgba(255,255,255,0.55); }
+  /* Two-avatar layout */
+  .stage.two .pair { display: flex; gap: 14px; align-items: flex-end; }
+  .stage.two .person { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .stage.two .person .name { font-size: 16px; font-weight: 700; color: #fff; }
+  .stage.two .person .badge { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 999px; background: rgba(78,214,90,0.14); color: #4ED66A; border: 1px solid rgba(78,214,90,0.4); }
+  .stage.two .person.active .badge { background: rgba(247,171,32,0.16); color: #F7AB20; border-color: rgba(247,171,32,0.5); }
+
+  .avatar-ananya { width: 110px; height: 110px; border-radius: 50%;
+    background: linear-gradient(145deg, #b08bff, #7C3AED 70%);
+    color: #fff; font-weight: 900; font-size: 50px; letter-spacing: -0.04em;
+    display: grid; place-items: center;
+    box-shadow: 0 0 40px rgba(124,58,237,0.4); transition: box-shadow 200ms; }
+  .avatar-ananya.small { width: 84px; height: 84px; font-size: 36px; }
+  .avatar-ananya.speaking { box-shadow: 0 0 48px rgba(124,58,237,0.7); animation: pulse-purple 1.4s ease-in-out infinite; }
+  .avatar-jia { width: 84px; height: 84px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #FFC86B, #F7AB20 60%, #b06f00 100%);
+    color: #0E0E10; font-weight: 900; font-size: 38px; letter-spacing: -0.04em;
+    display: grid; place-items: center;
+    box-shadow: 0 0 40px rgba(247,171,32,0.45);
+    animation: jia-in 380ms cubic-bezier(0.4,0,0.2,1) both, mic-glow 1.6s ease-in-out infinite; }
+  .avatar-jia.speaking { box-shadow: 0 0 56px rgba(247,171,32,0.8); animation: jia-in 380ms cubic-bezier(0.4,0,0.2,1) both, pulse-gold 1.0s ease-in-out infinite; }
+
+  /* Listening badge (Jia, when silent in background) */
+  .listen-bar { display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 11px; border-radius: 999px;
+    background: rgba(78,214,90,0.12); border: 1px solid rgba(78,214,90,0.35);
+    font-size: 11px; font-weight: 700; color: #4ED65A; letter-spacing: 0.04em; }
+  .listen-bar .waves { display: inline-flex; gap: 2px; align-items: center; }
+  .listen-bar .waves span { width: 2px; background: #4ED65A; border-radius: 1px;
+    animation: wave 1.0s ease-in-out infinite; }
+  .listen-bar .waves span:nth-child(1) { height: 8px; animation-delay: 0s; }
+  .listen-bar .waves span:nth-child(2) { height: 12px; animation-delay: 0.15s; }
+  .listen-bar .waves span:nth-child(3) { height: 6px; animation-delay: 0.3s; }
+
+  /* Caption ticker */
+  .ticker { width: 100%; min-height: 48px; max-width: 340px;
+    background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 10px 14px;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    transition: opacity 200ms; }
+  .ticker.empty { opacity: 0; }
+  .ticker .who { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 3px; }
+  .ticker .who.jia    { color: #F7AB20; }
+  .ticker .who.ananya { color: #b08bff; }
+  .ticker .who.shreya { color: #4ED66A; }
+  .ticker .who.system { color: rgba(255,255,255,0.5); }
+  .ticker .text { font-size: 13.5px; color: #F2F2F2; line-height: 1.4; letter-spacing: -0.005em; }
+
+  /* Action buttons row (mute / keypad / speaker / add / FaceTime / mic) */
+  .actions { display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px 30px; padding: 8px 6px 4px; flex-shrink: 0; }
+  .action { display: flex; flex-direction: column; align-items: center; gap: 5px;
+    background: none; border: none; color: #fff; cursor: pointer; font-family: inherit; }
+  .action .icn { width: 56px; height: 56px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); display: grid; place-items: center;
+    transition: background 150ms; }
+  .action.active .icn { background: #fff; color: #000; }
+  .action .lab { font-size: 11px; color: rgba(255,255,255,0.95); }
+
+  /* End call */
+  .end-row { display: flex; justify-content: center; padding: 6px 0 0; flex-shrink: 0; }
+  .end-btn { width: 64px; height: 64px; border-radius: 50%;
+    background: #FF3B30; border: none; cursor: pointer;
+    display: grid; place-items: center;
+    box-shadow: 0 6px 20px rgba(255,59,48,0.4); }
+
+  /* Notification banner — drops down from top */
+  .notif-banner { position: absolute; top: 56px; left: 12px; right: 12px; z-index: 80;
+    background: rgba(28,28,32,0.94); backdrop-filter: blur(14px);
+    border: 1px solid rgba(247,171,32,0.45);
+    border-radius: 18px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    cursor: pointer;
+    animation: slide-down 380ms cubic-bezier(0.4,0,0.2,1) both; }
+  .notif-banner:hover { background: rgba(36,36,42,0.95); border-color: rgba(247,171,32,0.6); }
+  .notif-banner .ico { width: 36px; height: 36px; border-radius: 999px;
+    background: linear-gradient(145deg, #FFC86B, #F7AB20); color: #0E0E10;
+    display: grid; place-items: center; font-weight: 900; font-size: 18px; flex-shrink: 0;
+    animation: mic-glow 1.6s ease-in-out infinite; }
+  .notif-banner .body { flex: 1; min-width: 0; color: #F2F2F2; }
+  .notif-banner .title { font-size: 13px; font-weight: 800; }
+  .notif-banner .sub   { font-size: 11.5px; color: rgba(242,242,242,0.7); margin-top: 1px; }
+  .notif-banner .cta   { font-size: 11px; font-weight: 800; color: #F7AB20;
+    text-transform: uppercase; letter-spacing: 0.1em; }
+
+  /* Trigger pill (debug) */
+  .trigger-pill { position: absolute; top: 60px; right: 12px; z-index: 60;
+    padding: 7px 12px; border-radius: 999px; background: rgba(247,171,32,0.18);
+    color: #F7AB20; border: 1px solid rgba(247,171,32,0.4); font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit; }
+
+  /* Summary card (post-call) */
+  .summary-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 32px; gap: 14px; color: #fff;
+    background: radial-gradient(ellipse at top, #0a0a0c 0%, #050505 80%); }
+  .summary-screen .checkmark { width: 76px; height: 76px; border-radius: 50%;
+    background: linear-gradient(145deg, #FFC86B, #F7AB20); color: #0E0E10;
+    display: grid; place-items: center; font-weight: 900; font-size: 34px; letter-spacing: -0.04em;
+    box-shadow: 0 6px 30px rgba(247,171,32,0.35); }
+  .summary-screen h2 { font-size: 22px; font-weight: 800; }
+  .summary-screen p  { font-size: 14px; color: rgba(255,255,255,0.65); max-width: 280px; line-height: 1.5; }
+  .summary-screen .replay { margin-top: 10px; padding: 10px 20px; border-radius: 999px;
+    background: linear-gradient(145deg, #FFC86B, #F7AB20); color: #0E0E10;
+    border: none; font-family: inherit; font-weight: 800; font-size: 13px; cursor: pointer; }
+
+  /* Animations */
+  @keyframes jia-in { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
+  @keyframes slide-down { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes mic-glow { 0%,100% { box-shadow: 0 0 0 0 rgba(247,171,32,0.6); } 50% { box-shadow: 0 0 0 14px rgba(247,171,32,0); } }
+  @keyframes pulse-gold { 0%,100% { box-shadow: 0 0 56px rgba(247,171,32,0.85); } 50% { box-shadow: 0 0 80px rgba(247,171,32,0.4); } }
+  @keyframes pulse-purple { 0%,100% { box-shadow: 0 0 48px rgba(124,58,237,0.75); } 50% { box-shadow: 0 0 70px rgba(124,58,237,0.35); } }
+  @keyframes wave { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(0.4); } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ── Audio cache & playback ────────────────────────────────
+const CLIPS = [
+  'at_entry_tone', 'at_sys_announce',
+  'at_ananya_open', 'at_shreya_yes', 'at_shreya_ask',
+  'at_jia_weather', 'at_ananya_lock', 'at_shreya_done', 'at_ananya_bye',
+];
+const CACHE = {};
+CLIPS.forEach(n => { const a = new Audio(`audio/${n}.wav`); a.preload = 'auto'; CACHE[n] = a; });
+let CURRENT = null;
+function playClip(name) {
+  return new Promise(resolve => {
+    const a = CACHE[name] || new Audio(`audio/${name}.wav`);
+    if (CURRENT && CURRENT !== a) { try { CURRENT.pause(); CURRENT.currentTime = 0; } catch(_){} }
+    CURRENT = a; a.currentTime = 0;
+    const done = () => { a.onended = a.onerror = null; resolve(); };
+    a.onended = done; a.onerror = done;
+    const p = a.play(); if (p && p.catch) p.catch(done);
+  });
+}
+function stopAudio() { if (CURRENT) { try { CURRENT.pause(); CURRENT.currentTime = 0; } catch(_){} CURRENT = null; } }
+
+// ── Conversation script ───────────────────────────────────
+// Each turn: { who, clip, text, [trigger: 'notify'] }
+const SCRIPT = [
+  { who: 'ananya', clip: 'at_ananya_open',
+    text: "Hey Shreya! Are we still on for dinner tonight?" },
+  { who: 'shreya', clip: 'at_shreya_yes',
+    text: "Yes, was thinking 7:30. But the weather looks iffy — let me bring Jia in." },
+  { trigger: 'notify' },                      // notification appears, script pauses until tap
+  { who: 'system-tone', clip: 'at_entry_tone' },
+  { who: 'system', clip: 'at_sys_announce',
+    text: "AI assistant has joined the call. Jia." },
+  { who: 'shreya', clip: 'at_shreya_ask',
+    text: "Hey Jia, what's the weather for tonight? We're stepping out around 7:30." },
+  { who: 'jia', clip: 'at_jia_weather',
+    text: "Mumbai tonight is 27 degrees, partly cloudy. No rain expected. A comfortable evening for dinner." },
+  { who: 'ananya', clip: 'at_ananya_lock',
+    text: "Great. Let's lock 7:30 at Bastian then." },
+  { who: 'shreya', clip: 'at_shreya_done',
+    text: "Done. See you there!" },
+  { who: 'ananya', clip: 'at_ananya_bye',
+    text: "Bye!" },
+  { trigger: 'end' },
+];
+
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+function App() {
+  // Auto-fit
+  useEffect(() => {
+    const fit = () => {
+      const dev = document.querySelector('.device'); if (!dev) return;
+      const sw = (window.innerWidth - 24) / 390;
+      const sh = (window.innerHeight - 24) / 844;
+      dev.style.transform = `scale(${Math.min(1, sw, sh)})`;
+    };
+    fit(); window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, []);
+
+  const [phase, setPhase]       = useState('call');         // 'call' | 'jia-joining' | 'ended'
+  const [jiaOnCall, setJiaOnCall] = useState(false);        // is Jia a participant?
+  const [activeSpeaker, setActiveSpeaker] = useState(null); // 'jia' | 'ananya' | 'shreya' | 'system'
+  const [ticker, setTicker]     = useState(null);            // { who, text }
+  const [notif, setNotif]       = useState(false);
+  const [scriptIdx, setScriptIdx] = useState(0);
+  const [callTime, setCallTime] = useState('00:00');
+  const [statusTime, setStatusTime] = useState(() => {
+    const d = new Date(); return d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0');
+  });
+  const callStart = useRef(Date.now());
+  const cancelRef = useRef(false);
+
+  // Status bar clock
+  useEffect(() => {
+    const t = setInterval(() => {
+      const d = new Date(); setStatusTime(d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0'));
+    }, 30_000); return () => clearInterval(t);
+  }, []);
+
+  // Call timer
+  useEffect(() => {
+    if (phase !== 'call' && phase !== 'jia-joining') return;
+    const t = setInterval(() => {
+      const s = Math.floor((Date.now() - callStart.current) / 1000);
+      const m = Math.floor(s / 60), r = s % 60;
+      setCallTime(String(m).padStart(2,'0') + ':' + String(r).padStart(2,'0'));
+    }, 500);
+    return () => clearInterval(t);
+  }, [phase]);
+
+  // Drive the script
+  async function runFrom(idx) {
+    cancelRef.current = false;
+    let i = idx;
+    while (i < SCRIPT.length && !cancelRef.current) {
+      const turn = SCRIPT[i];
+      if (turn.trigger === 'notify') {
+        setNotif(true);
+        // Stop here — wait for user to tap. Tap will call resumeFromNotify(i+1).
+        setScriptIdx(i + 1);
+        return;
+      }
+      if (turn.trigger === 'end') {
+        setActiveSpeaker(null); setTicker(null);
+        await wait(500);
+        setPhase('ended');
+        return;
+      }
+      // Show ticker + play clip
+      setActiveSpeaker(turn.who);
+      if (turn.text) setTicker({ who: turn.who, text: turn.text });
+      else setTicker(null);
+      if (turn.clip) {
+        // Special: entry tone is brief
+        await playClip(turn.clip);
+      }
+      // Brief pause between turns
+      await wait(turn.who === 'system-tone' ? 100 : 350);
+      i += 1;
+      setScriptIdx(i);
+    }
+  }
+  useEffect(() => { runFrom(0); /* eslint-disable-next-line */ }, []);
+
+  function onTapNotif() {
+    setNotif(false);
+    setPhase('jia-joining');
+    setJiaOnCall(true);
+    // Resume script from saved index
+    setTimeout(() => {
+      setPhase('call');
+      runFrom(scriptIdx);
+    }, 200);
+  }
+
+  function endCall() {
+    cancelRef.current = true; stopAudio();
+    setActiveSpeaker(null); setTicker(null); setPhase('ended');
+  }
+
+  function restart() {
+    cancelRef.current = true; stopAudio();
+    setNotif(false); setJiaOnCall(false);
+    setActiveSpeaker(null); setTicker(null);
+    setScriptIdx(0); setCallTime('00:00');
+    callStart.current = Date.now();
+    setPhase('call');
+    setTimeout(() => runFrom(0), 100);
+  }
+
+  return (
+    <div className="device">
+      <a href="index.html" className="device-back-link">← Back</a>
+      <div className="island"/>
+      <div className="statusbar">
+        <span>{statusTime}</span>
+        <span style={{display:'flex',gap:5,alignItems:'center'}}>
+          <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><rect x="0" y="6" width="2.5" height="5" rx="0.6"/><rect x="3.5" y="3.5" width="2.5" height="7.5" rx="0.6"/><rect x="7" y="1" width="2.5" height="10" rx="0.6"/><rect x="10.5" y="-1" width="2.5" height="12" rx="0.6"/></svg>
+          <svg width="22" height="10" viewBox="0 0 22 10" fill="currentColor"><rect x="0" y="0" width="20" height="10" rx="2.5" fill="none" stroke="currentColor" strokeWidth="0.8"/><rect x="1.5" y="1.5" width="14" height="7" rx="1.5"/><rect x="20.5" y="3.5" width="1" height="3" rx="0.4"/></svg>
+        </span>
+      </div>
+
+      {phase !== 'ended' && (
+        <div className="call-screen">
+          <div className="top-meta">
+            <div className="label">{jiaOnCall ? 'Conference call · 3 of 3' : 'On a call'}</div>
+            <div className="timer">{callTime}</div>
+          </div>
+
+          <div className={`stage ${jiaOnCall ? 'two' : 'single'}`}>
+            {!jiaOnCall ? (
+              <div className="one-up">
+                <div className={`avatar-ananya ${activeSpeaker === 'ananya' ? 'speaking' : ''}`}>A</div>
+                <div className="name">Ananya</div>
+                <div className="sub">Friends · Mobile</div>
+              </div>
+            ) : (
+              <div className="pair">
+                <div className={`person ${activeSpeaker === 'ananya' ? 'active' : ''}`}>
+                  <div className={`avatar-ananya small ${activeSpeaker === 'ananya' ? 'speaking' : ''}`}>A</div>
+                  <div className="name">Ananya</div>
+                  <div className="badge">{activeSpeaker === 'ananya' ? '🎙 Speaking' : 'Online'}</div>
+                </div>
+                <div className={`person ${activeSpeaker === 'jia' ? 'active' : ''}`}>
+                  <div className={`avatar-jia ${activeSpeaker === 'jia' ? 'speaking' : ''}`}>J</div>
+                  <div className="name">Jia</div>
+                  <div className="badge">{activeSpeaker === 'jia' ? '🎙 Speaking' : 'Listening'}</div>
+                </div>
+              </div>
+            )}
+
+            {jiaOnCall && activeSpeaker !== 'jia' && (
+              <div className="listen-bar" style={{marginTop: 6}}>
+                <span className="waves"><span/><span/><span/></span>
+                Jia · listening in the background
+              </div>
+            )}
+
+            <div className={`ticker ${ticker ? '' : 'empty'}`} style={{marginTop: 14}}>
+              {ticker && (
+                <>
+                  <div className={`who ${ticker.who}`}>
+                    {ticker.who === 'jia' ? 'Jia' :
+                     ticker.who === 'ananya' ? 'Ananya' :
+                     ticker.who === 'shreya' ? 'You · Shreya' :
+                     ticker.who === 'system' ? 'System' : ''}
+                  </div>
+                  <div className="text">{ticker.text}</div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="actions">
+            <button className="action"><span className="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 2h6v10a3 3 0 0 1-6 0V2zM4 11a8 8 0 0 0 16 0M12 19v3"/></svg></span><span className="lab">mute</span></button>
+            <button className="action"><span className="icn">{[6,12,18].flatMap(y => [6,12,18].map(x => <span key={x+'-'+y} style={{display:'inline-block',width:3,height:3,borderRadius:2,background:'#fff',position:'absolute',transform:`translate(${x-12}px,${y-12}px)`}}/>))}</span><span className="lab">keypad</span></button>
+            <button className="action active"><span className="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 10v4a3 3 0 0 0 3 3h2l5 4V3L8 7H6a3 3 0 0 0-3 3z"/><path d="M16 8a5 5 0 0 1 0 8M19 5a9 9 0 0 1 0 14"/></svg></span><span className="lab">speaker</span></button>
+            <button className="action"><span className="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0M18 7v6M15 10h6"/></svg></span><span className="lab">add</span></button>
+            <button className="action"><span className="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 8l-6 4 6 4V8z"/></svg></span><span className="lab">FaceTime</span></button>
+            <button className="action"><span className="icn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg></span><span className="lab">mic</span></button>
+          </div>
+
+          <div className="end-row">
+            <button className="end-btn" onClick={endCall}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M21 15.46l-5.27-.61a1.25 1.25 0 0 0-1.06.36l-2.16 2.17a16 16 0 0 1-7.06-7.07l2.18-2.16a1.25 1.25 0 0 0 .36-1.06L7.39 1.83A1.25 1.25 0 0 0 6.16 1H3a2 2 0 0 0-2 2 22 22 0 0 0 22 22 2 2 0 0 0 2-2v-3.16a1.25 1.25 0 0 0-1-1.38z" transform="rotate(135 12 12)"/></svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Notification banner — drops down + waits for user tap */}
+      {notif && (
+        <div className="notif-banner" onClick={onTapNotif}>
+          <div className="ico">J</div>
+          <div className="body">
+            <div className="title">Add agent to call</div>
+            <div className="sub">Jia is available · she'll join silently</div>
+          </div>
+          <div className="cta">Tap →</div>
+        </div>
+      )}
+
+      {phase === 'ended' && (
+        <div className="summary-screen">
+          <div className="checkmark">✓</div>
+          <h2>Call ended</h2>
+          <p>You added Jia mid-call. She joined silently and answered your weather question. Dinner locked in: <b style={{color:'#F7AB20'}}>7:30 PM at Bastian</b>.</p>
+          <button className="replay" onClick={restart}>Replay demo</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
