@@ -1186,7 +1186,7 @@ const CALL_SCRIPT = [
 
 const INITIAL_RCS = [
   { id: 'r1', role: 'system', kind: 'system',
-    text: "Jia auto-answered an incoming call from Ananya · just now" },
+    text: "Jia is handling an incoming call from Ananya · just now" },
   { id: 'r2', role: 'system', kind: 'chips',
     chips: ['Listen in', 'Join', 'Decline'] },
 ];
@@ -1341,26 +1341,32 @@ function App() {
     if (r) { try { r.pause(); r.currentTime = 0; } catch(_) {} }
   }, []);
 
+  // Shared "Jia takes over the call" trigger. Fires when the user lets the
+  // phone ring 5 times unanswered, OR when the user explicitly declines.
+  // Either way: ring stops, brief connecting beat, call starts, script runs.
+  const triggerJiaTakeover = useCallback(() => {
+    stopRing();
+    try {
+      const warm = AUDIO_CACHE['ci_jia_answer'];
+      if (warm) { warm.muted = true; warm.play().then(() => { warm.pause(); warm.muted = false; warm.currentTime = 0; }).catch(()=>{}); }
+    } catch(_) {}
+    setPhase('connecting');
+    setTimeout(() => {
+      setPhase('call');
+      callStartRef.current = Date.now();
+      setRcsMessages([]); setOverlay(null);
+      setCallDropped(false); setShowEndedPill(false);
+      setNotification(null);
+      advanceCallRef.current(0);
+    }, 1200);
+  }, [stopRing]);
+
   // Ring loop: phone rings 5 times. After 5th ring, Jia auto-answers.
-  // User can tap Accept (takes the call themselves) or Decline at any time.
+  // User can also tap Decline at any point to skip to Jia takeover.
   useEffect(() => {
     if (phase !== 'incoming') { stopRing(); return; }
     if (ringCount >= 5) {
-      stopRing();
-      // Warm up audio playback (gesture-bound is bypassed if cached)
-      try {
-        const warm = AUDIO_CACHE['ci_jia_answer'];
-        if (warm) { warm.muted = true; warm.play().then(() => { warm.pause(); warm.muted = false; warm.currentTime = 0; }).catch(()=>{}); }
-      } catch(_) {}
-      setPhase('connecting');
-      setTimeout(() => {
-        setPhase('call');
-        callStartRef.current = Date.now();
-        setRcsMessages([]); setOverlay(null);
-        setCallDropped(false); setShowEndedPill(false);
-        setNotification(null);
-        advanceCallRef.current(0);
-      }, 1200);
+      triggerJiaTakeover();
       return;
     }
     // Play one phone ring per tick
@@ -1370,7 +1376,7 @@ function App() {
     } catch(_) {}
     const t = setTimeout(() => setRingCount(c => c + 1), 1300);
     return () => clearTimeout(t);
-  }, [phase, ringCount, stopRing]);
+  }, [phase, ringCount, stopRing, triggerJiaTakeover]);
 
   const acceptIncomingCall = useCallback(() => {
     stopRing();
@@ -1378,10 +1384,11 @@ function App() {
     callStartRef.current = Date.now();
   }, [stopRing]);
 
+  // Decline now hands off to Jia (same flow as 5-ring timeout) instead of
+  // dropping the call.
   const declineIncomingCall = useCallback(() => {
-    stopRing();
-    setPhase('ended');
-  }, [stopRing]);
+    triggerJiaTakeover();
+  }, [triggerJiaTakeover]);
 
   const onMicTap = useCallback(() => {
     if (!waitingUser) return;
